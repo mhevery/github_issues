@@ -11,6 +11,8 @@ import {Component, View, bootstrap, NgFor} from 'angular2/angular2';
   template: `
   <h1>GitHub</h1>
   <button (click)="loadIssues()">Load Issues</button>
+  Filter: [ <a href (click)="filterNone(); false">none</a>
+          | <a href (click)="filterTriage(); false">triage</a> ]
   <table>
     <tr>
       <th>#</th>
@@ -19,22 +21,29 @@ import {Component, View, bootstrap, NgFor} from 'angular2/angular2';
       <th>Priority</th>
       <th>Component</th>
       <th>Type</th>
+      <th>Effort</th>
+      <th>PR State</th>
+      <th>Customer</th>
       <th>Labels</th>
     </tr>
     <div>Issuse: {{issues.length}}</div>
     <tr *ng-for="var issue of issues">
-      <td><a [href]="issue.html_url">#{{issue.number}}</a></td>
-      <td>{{issue.title}}}</td>
-      <td><a [href]="(issue.milestone || {}).html_url">{{(issue.milestone||{}).title}}</a></td>
-      <td>{{issue.priority}}</td>
-      <td>{{issue.component}}</td>
-      <td>{{issue.type}}</td>
+      <td><a target="_blank"  [href]="issue.html_url">#{{issue.number}}</a></td>
+      <td>{{issue.title}}</td>
+      <td><a target="_blank" [href]="(issue.milestone || {}).html_url">{{(issue.milestone||{}).title}}</a></td>
+      <td nowrap>{{issue.priority}}</td>
+      <td nowrap>{{issue.comp}}</td>
+      <td nowrap>{{issue.type}}</td>
+      <td nowrap>{{issue.effort}}</td>
+      <td nowrap>{{issue.pr_state}}</td>
+      <td nowrap>{{issue.cust}}</td>
       <td>{{issue.labels_other.join('; ')}}</td>
     </tr>
   </table>
   `
 })
 class GithubIssues {
+  allIssues: Array<gh3.Issue> = [];
   issues: Array<gh3.Issue> = [];
   angularUser = new Gh3.User("angular");
   angularRepo = new Gh3.Repository("angular", this.angularUser);
@@ -45,14 +54,25 @@ class GithubIssues {
   }
   
   loadIssues() {
-    this.angularRepo.fetchIssues((err, res) => {
-      this.issues = res.issues;
-      this.issues.forEach((issue: gh3.Issue) => {
-        console.log(issue);
-        issue.parseLabels();
-      });
+    this.angularRepo.fetchAllIssues((err, res) => {
+      this.allIssues = res.issues;
+      this.allIssues.forEach((issue: gh3.Issue) => issue.parseLabels());
+      this.filterTriage();
     });
   }  
+  
+  filterNone() {
+    this.issues = this.allIssues;
+  }
+  
+  filterTriage() {
+    this.issues = [];
+    this.allIssues.forEach((issue: gh3.Issue) => {
+      if (issue.needsTriage()) {
+        this.issues.push(issue);
+      }
+    });    
+  }
 }
 
 
@@ -66,7 +86,9 @@ Gh3.Issue.prototype.parseLabels = function() {
     var split = label.name.split(':');
     var name = split[0];
     var value = split[1];
-    if (value) value = value.trim();
+    if (value) {
+      value = value.split('/')[0].trim();
+    }
     switch (name) {
       case 'P0':
       case 'P1':
@@ -74,7 +96,12 @@ Gh3.Issue.prototype.parseLabels = function() {
       case 'P3':
       case 'P4':
         name = 'priority';
+        value = label.name;
       case 'comp':
+      case 'cla':
+      case 'pr_state':
+      case 'cust':
+      case 'effort':
       case 'type':
         this[name] = (this[name] ? this[name] + '|' : '') + value;
         break;
@@ -82,6 +109,36 @@ Gh3.Issue.prototype.parseLabels = function() {
         other.push(label.name);
     }
   }); 
+};
+
+Gh3.Issue.prototype.needsTriage = function() {
+  return !this.pull_request 
+         && (!this.type || !this.priority || !this.comp || !this.effort);
+}
+
+Gh3.Repository.prototype.fetchAllIssues = function (callback) {
+	var that = this;
+	that.issues = [];
+  
+  function fetchPage(page) {
+  	Gh3.Helper.callHttpApi({
+  		service : "repos/"+that.user.login+"/"+that.name+"/issues?per_page=100&page=" + page,
+  		data : {sort: "updated"},
+  		success : function(res) {
+        if (res.data.length) {
+    			_.each(res.data, function (issue) {
+    				that.issues.push(new Gh3.Issue(issue.number, issue.user, that.name, issue));
+    			});
+          fetchPage(page + 1);
+        } else if (callback) callback(null, that);
+  
+  		},
+  		error : function (res) {
+  			if (callback) callback(new Error(res.responseJSON.message),res);
+  		}
+  	});
+  }
+  fetchPage(0);
 };
 
 bootstrap(GithubIssues);

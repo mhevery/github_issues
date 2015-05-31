@@ -21,9 +21,13 @@ declare module gh3 {
     priority: string;
     component: string;
     type: string;
-    labels_other: string;
+    effort: string;
+    pr_state: string;
+    cust: string;
+    labels_other: Array<string>;
     
     parseLabels(): void;
+    needsTriage(): boolean;
   }
   
   interface Label {
@@ -45,6 +49,7 @@ declare module gh3 {
     user: User;
     
     fetchIssues(callback:(err, res:Repository)=>void):void;
+    fetchAllIssues(callback:(err, res:Repository)=>void):void;
   }
   
 }
