@@ -17,6 +17,7 @@ declare module gh3 {
     body: string,
     labels: Array<Label>,
     milestone: Milestone,
+    pull_request: PullRequest
     
     priority: string;
     component: string;
@@ -28,6 +29,10 @@ declare module gh3 {
     
     parseLabels(): void;
     needsTriage(): boolean;
+  }
+  
+  interface PullRequest {
+    
   }
   
   interface Label {

@@ -13,8 +13,10 @@ import {Component, View, bootstrap, NgFor} from 'angular2/angular2';
   <button (click)="loadIssues()">Load Issues</button>
   Filter: [ <a href (click)="filterNone(); false">none</a>
           | <a href (click)="filterTriage(); false">triage</a> ]
+  Action: [ <a href (click)="setupAuthToken(); false">Github Auth Token</a> ]
   <table>
     <tr>
+      <th></th>
       <th>#</th>
       <th>Description</th>
       <th>Milestone</th>
@@ -28,8 +30,9 @@ import {Component, View, bootstrap, NgFor} from 'angular2/angular2';
     </tr>
     <div>Issuse: {{issues.length}}</div>
     <tr *ng-for="var issue of issues">
+      <td>{{issue.pull_request?'PR':''}}</td>
       <td><a target="_blank"  [href]="issue.html_url">#{{issue.number}}</a></td>
-      <td>{{issue.title}}</td>
+      <td><a target="_blank"  [href]="issue.html_url">{{issue.title}}</a></td>
       <td><a target="_blank" [href]="(issue.milestone || {}).html_url">{{(issue.milestone||{}).title}}</a></td>
       <td nowrap>{{issue.priority}}</td>
       <td nowrap>{{issue.comp}}</td>
@@ -57,7 +60,6 @@ class GithubIssues {
     this.angularRepo.fetchAllIssues((err, res) => {
       this.allIssues = res.issues;
       this.allIssues.forEach((issue: gh3.Issue) => issue.parseLabels());
-      this.filterTriage();
     });
   }  
   
@@ -72,6 +74,11 @@ class GithubIssues {
         this.issues.push(issue);
       }
     });    
+  }
+  
+  setupAuthToken() {
+    localStorage.setItem('github.client_id', prompt("Github 'client_id':"));
+    localStorage.setItem('github.client_secret', prompt("Github 'client_sceret':"));
   }
 }
 
@@ -103,7 +110,7 @@ Gh3.Issue.prototype.parseLabels = function() {
       case 'cust':
       case 'effort':
       case 'type':
-        this[name] = (this[name] ? this[name] + '|' : '') + value;
+        this[name] = (this[name] ? this[name] + '; ' : '') + value;
         break;
       default:
         other.push(label.name);
@@ -123,7 +130,10 @@ Gh3.Repository.prototype.fetchAllIssues = function (callback) {
   function fetchPage(page) {
   	Gh3.Helper.callHttpApi({
   		service : "repos/"+that.user.login+"/"+that.name+"/issues?per_page=100&page=" + page,
-  		data : {sort: "updated"},
+  		data : {
+        client_id: localStorage.getItem('github.client_id'), 
+        client_secret: localStorage.getItem('github.client_secret')
+      },
   		success : function(res) {
         if (res.data.length) {
     			_.each(res.data, function (issue) {
