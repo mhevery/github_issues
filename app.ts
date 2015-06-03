@@ -1,7 +1,9 @@
 /// <reference path="typings/angular2/angular2.d.ts" />
-/// <reference path="typings/gh3.d.ts" />
+/// <reference path="typings/github.d.ts" />
 
 import {Component, View, bootstrap, NgFor} from 'angular2/angular2';
+
+function get_number(i:any) {return i.number;}
 
 @Component({
 	selector: 'github-issues'
@@ -10,13 +12,13 @@ import {Component, View, bootstrap, NgFor} from 'angular2/angular2';
   directives: [NgFor],
   template: `
   <h1>GitHub</h1>
-  <button (click)="loadIssues()">Load Issues</button>
-  Filter: [ <a href (click)="filterNone(); false">none</a>
-          | <a href (click)="filterTriage(); false">triage</a> ]
+  <button (click)="loadIssues()">Load Issues {{repo.state}}</button>
   Action: [ <a href (click)="setupAuthToken(); false">Github Auth Token</a> ]
+  
+  <h1>Issue Triage</h1>
+  Issues: {{triageIssues.items.length}}
   <table>
     <tr>
-      <th></th>
       <th>#</th>
       <th>Description</th>
       <th>Milestone</th>
@@ -24,13 +26,10 @@ import {Component, View, bootstrap, NgFor} from 'angular2/angular2';
       <th>Component</th>
       <th>Type</th>
       <th>Effort</th>
-      <th>PR State</th>
       <th>Customer</th>
       <th>Labels</th>
     </tr>
-    <div>Issuse: {{issues.length}}</div>
-    <tr *ng-for="var issue of issues">
-      <td>{{issue.pull_request?'PR':''}}</td>
+    <tr *ng-for="var issue of triageIssues.items">
       <td><a target="_blank"  [href]="issue.html_url">#{{issue.number}}</a></td>
       <td><a target="_blank"  [href]="issue.html_url">{{issue.title}}</a></td>
       <td><a target="_blank" [href]="(issue.milestone || {}).html_url">{{(issue.milestone||{}).title}}</a></td>
@@ -38,117 +37,252 @@ import {Component, View, bootstrap, NgFor} from 'angular2/angular2';
       <td nowrap>{{issue.comp}}</td>
       <td nowrap>{{issue.type}}</td>
       <td nowrap>{{issue.effort}}</td>
-      <td nowrap>{{issue.pr_state}}</td>
       <td nowrap>{{issue.cust}}</td>
       <td>{{issue.labels_other.join('; ')}}</td>
     </tr>
   </table>
+  
+  <h1>PR Triage</h1>
+  PRs: {{prIssues.items.length}}
+  <table>
+    <tr>
+      <th>PR#</th>
+      <th>Description</th>
+      <th>PR State</th>
+      <th>PR Action</th>
+      <th>Priority</th>
+      <th>Customer</th>
+      <th>Labels</th>
+      <th>Assigned</th>
+    </tr>
+    <tr *ng-for="var issue of prIssues.items">
+      <td><a target="_blank"  [href]="issue.html_url">#{{issue.number}}</a></td>
+      <td><a target="_blank"  [href]="issue.html_url">{{issue.title}}</a></td>
+      <td nowrap>{{issue.pr_state}}</td>
+      <td nowrap>{{issue.pr_action}}</td>
+      <td nowrap>{{issue.priority}}</td>
+      <td nowrap>{{issue.cust}}</td>
+      <td>{{issue.labels_other.join('; ')}}</td>
+      <td><a href="{{}}" target="_blank"><img width="15" height="15" [hidden]="!issue.assignee" [src]="(issue.assignee||{}).avatar_url || ''"> {{(issue.assignee||{}).login}}</a></td>
+    </tr>
+  </table>
+  
+  <h1>Milestone</h1>
+  <div *ng-for="var milestonePane of milestones.items">
+    <h2><a target="_blank" [href]="milestonePane.milestone.html_url">
+        {{milestonePane.milestone.title}}</a></h2>
+    
+  </div>
   `
 })
 class GithubIssues {
-  allIssues: Array<gh3.Issue> = [];
-  issues: Array<gh3.Issue> = [];
-  angularUser = new Gh3.User("angular");
-  angularRepo = new Gh3.Repository("angular", this.angularUser);
+  triageIssues = new Set<Issue>(get_number);
+  prIssues = new Set<Issue>(get_number);
+  repo = new Repository("angular", "angular");
+  milestones = new Set<MilestonePane>(get_number);
+  noMilestone = new Set<Issue>(get_number);
 
   
   constructor() {
+    this.repo.onNewIssue = this.onNewIssue.bind(this);
+    this.repo.onNewPR = this.onNewPr.bind(this);
     this.loadIssues();
   }
   
   loadIssues() {
-    this.angularRepo.fetchAllIssues((err, res) => {
-      this.allIssues = res.issues;
-      this.allIssues.forEach((issue: gh3.Issue) => issue.parseLabels());
-    });
+    this.repo.refresh();
   }  
   
-  filterNone() {
-    this.issues = this.allIssues;
-  }
-  
-  filterTriage() {
-    this.issues = [];
-    this.allIssues.forEach((issue: gh3.Issue) => {
-      if (issue.needsTriage()) {
-        this.issues.push(issue);
+  onNewIssue(issue: Issue) {
+    if (issue.needsTriage()) {
+      this.triageIssues.set(issue);
+    } else if (issue.milestone) {
+      var milestonePane = this.milestones.getByKey(issue.milestone.number);
+      if (!milestonePane) {
+        milestonePane = new MilestonePane(issue.milestone);
+        this.milestones.set(milestonePane);
       }
-    });    
+      milestonePane.add(issue);
+    } else {
+      this.noMilestone.set(issue);
+    }
   }
   
+  onNewPr(issue: Issue) {
+    this.prIssues.set(issue);
+  }
+    
   setupAuthToken() {
     localStorage.setItem('github.client_id', prompt("Github 'client_id':"));
     localStorage.setItem('github.client_secret', prompt("Github 'client_sceret':"));
   }
 }
 
-
-Gh3.Issue.prototype.parseLabels = function() {
-  var other = this.labels_other = [];
-  this.priority = '';
-  this.type = '';
-  this.component = '';
+class MilestonePane {
+  number: number;
+  asignees: Array<AsigneePane> = [];
   
-  this.labels.forEach((label: gh3.Label) => {
-    var split = label.name.split(':');
-    var name = split[0];
-    var value = split[1];
-    if (value) {
-      value = value.split('/')[0].trim();
-    }
-    switch (name) {
-      case 'P0':
-      case 'P1':
-      case 'P2':
-      case 'P3':
-      case 'P4':
-        name = 'priority';
-        value = label.name;
-      case 'comp':
-      case 'cla':
-      case 'pr_state':
-      case 'cust':
-      case 'effort':
-      case 'type':
-        this[name] = (this[name] ? this[name] + '; ' : '') + value;
-        break;
-      default:
-        other.push(label.name);
-    }
-  }); 
-};
-
-Gh3.Issue.prototype.needsTriage = function() {
-  return !this.pull_request 
-         && (!this.type || !this.priority || !this.comp || !this.effort);
+  constructor(public milestone: Milestone) {
+    this.number = milestone.number;
+  }
+  
+  add(issue:Issue) {}
 }
 
-Gh3.Repository.prototype.fetchAllIssues = function (callback) {
-	var that = this;
-	that.issues = [];
+class AsigneePane {
   
-  function fetchPage(page) {
-  	Gh3.Helper.callHttpApi({
-  		service : "repos/"+that.user.login+"/"+that.name+"/issues?per_page=100&page=" + page,
-  		data : {
-        client_id: localStorage.getItem('github.client_id'), 
-        client_secret: localStorage.getItem('github.client_secret')
-      },
-  		success : function(res) {
-        if (res.data.length) {
-    			_.each(res.data, function (issue) {
-    				that.issues.push(new Gh3.Issue(issue.number, issue.user, that.name, issue));
-    			});
-          fetchPage(page + 1);
-        } else if (callback) callback(null, that);
+}
+
+class Set<T> {
+  keys: { [s: number]: T; } = {};
+  items: Array<T> = [];
   
-  		},
-  		error : function (res) {
-  			if (callback) callback(new Error(res.responseJSON.message),res);
-  		}
-  	});
+  constructor(public keyGetter:(t:T) => number) {}
+  
+  getByKey(key: number) {
+    return this.keys[key];
   }
-  fetchPage(0);
-};
+  
+  set(item: T):T {
+    var key = this.keyGetter(item);
+    var oldItem = this.keys[key];
+    if (oldItem) {
+      var index = this.items.indexOf(oldItem);
+      this.items[index] = item;
+    } else {
+      this.items.push(item);
+    }
+    this.keys[key] = item;
+    return item;
+  }
+}
+
+
+class Repository {
+  state: string;
+  
+  issues:  { [s: string]: Issue; } = {};
+  previousIssues:  { [s: string]: Issue; } = {};
+  prs:  { [s: string]: Issue; } = {};
+  previousPrs:  { [s: string]: Issue; } = {};
+  
+  onNewIssue: (issue: Issue) => void = () => null;
+  onRemovedIssue: (issue: Issue) => void = () => null;
+  onNewPR: (issue: Issue) => void = () => null;
+  onRemovedPR: (issue: Issue) => void = () => null;
+  
+  constructor(public username: string, public repository: string) {
+    this.state = '';
+  }
+  
+  clientId() {
+    return localStorage.getItem('github.client_id');
+  }
+  
+  clientSecret() {
+    return localStorage.getItem('github.client_secret');
+  }
+  
+  refresh() {
+    this.state = 'refreshing';
+    this.previousIssues = this.issues;
+    this.previousPrs = this.prs;
+    
+    var fetchPage = (page: number) => {
+      var http = new XMLHttpRequest();
+      var params = `client_id=${this.clientId()}&client_secret=${this.clientSecret()}&per_page=100&page=${page}`;
+      var url = `https://api.github.com/repos/angular/angular/issues?${params}`;
+      http.open("GET", url, true);
+      
+      http.onreadystatechange = () => {
+        var response = http.responseText;
+        if (http.readyState == 4) {
+          if(http.status == 200) {
+            var issues: Array<Issue> = JSON.parse(response);
+            issues.forEach(this._processIssues.bind(this));
+            if (issues.length >= 100) {
+              fetchPage(page + 1);
+            } else {
+              this.state = '';
+              this._notifyRemoves();
+            }
+          } else {
+            console.error(response);
+          }
+        }
+      }
+      http.send(params);
+    }
+    fetchPage(0);
+  }
+  
+  _processIssues(issue: Issue) {
+    this._parseLabels(issue);
+    issue.needsTriage = function() {
+      if (this.pull_requst) {
+        return false;
+      } else {
+        return !this.type || !this.priority || !this.comp || !this.effort;
+      }
+    }
+
+    if (issue.pull_request) {
+      this.issues[issue.number] = issue;
+      this.onNewPR(issue);
+    } else {
+      this.prs[issue.number] = issue;
+      this.onNewIssue(issue);
+    }
+  }
+
+  _notifyRemoves() {
+    for(var issueNo in this.previousIssues) {
+      if (!this.issues[issueNo]) {
+        this.onRemovedIssue(this.previousIssues[issueNo]);
+      }
+    }
+    for(var prNo in this.previousPrs) {
+      if (!this.prs[prNo]) {
+        this.onRemovedIssue(this.previousPrs[prNo]);
+      }
+    }
+  }
+
+  _parseLabels(issue: Issue) {
+    var other = issue.labels_other = [];
+    issue.priority = '';
+    issue.type = '';
+    issue.component = '';
+    
+    issue.labels.forEach((label: Label) => {
+      var split = label.name.split(':');
+      var name = split[0];
+      var value = split[1];
+      if (value) {
+        value = value.split('/')[0].trim();
+      }
+      switch (name) {
+        case 'P0':
+        case 'P1':
+        case 'P2':
+        case 'P3':
+        case 'P4':
+          value = name;
+          name = 'priority';
+        case 'comp':
+        case 'cla':
+        case 'pr_state':
+        case 'pr_action':
+        case 'cust':
+        case 'effort':
+        case 'type':
+          issue[name] = (issue[name] ? issue[name] + '; ' : '') + value;
+          break;
+        default:
+          other.push(label.name);
+      }
+    }); 
+  }
+}
 
 bootstrap(GithubIssues);
