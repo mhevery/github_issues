@@ -39,7 +39,7 @@ function byMilestonPane(a: MilestonePane, b:MilestonePane): number {
           (<a href="https://github.com/settings/developers" target="_blank">Get Token</a>) ]
   
   <h1>Triage</h1>
-  <table border=1>
+  <table border=1 cellspacing=0>
     <tr>
       <th><h2>Issues {{triageIssues.items.length}}</h2></th>
       <th><h2>PRs {{prIssues.items.length}}</h2></th>
@@ -80,7 +80,7 @@ function byMilestonPane(a: MilestonePane, b:MilestonePane): number {
   <div *ng-for="var milestonePane of milestones.items">
     <h2><a target="_blank" [href]="milestonePane.milestone.html_url">
         {{milestonePane.milestone.title}}</a></h2>
-    <table>
+    <table border=1 cellspacing=0>
       <tr>
         <th><a href="https://github.com/angular/angular/issues?q=is%3Aopen+is%3Aissue+no%3Aassignee" target="_blank">!Assigned</a></th>
         <th *ng-for="var assigneePane of milestonePane.assignees.items">

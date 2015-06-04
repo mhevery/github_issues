@@ -51,8 +51,7 @@ var IssueComponent = (function () {
             properties: { 'issue': 'issue', 'compact': 'compact' }
         }),
         angular2_1.View({
-            directives: [angular2_1.NgIf],
-            template: "\n  <div>\n    {{perfIcon()}}{{typeIcon()}}{{effortIcon()}}<a target=\"_blank\" [href]=\"issue.html_url\">{{issue.number}}</a>\n    <span *ng-if=\"!compact\"><a [href]=\"issue.html_url\">{{issue.title}}</a></span>\n  </div>\n  "
+            template: "\n  <div>\n    {{perfIcon()}}{{typeIcon()}}{{effortIcon()}}<a target=\"_blank\" [href]=\"issue.html_url\">{{issue.number}}</a>\n    <span [hidden]=\"compact\">\n      <a target=\"_blank\" [href]=\"issue.html_url\">{{issue.title}}</a>\n      [ {{issue.comp}} ]\n    </span>\n  </div>\n  "
         }), 
         __metadata('design:paramtypes', [])
     ], IssueComponent);

@@ -1,15 +1,17 @@
-import {Component, View, NgIf} from 'angular2/angular2';
+import {Component, View} from 'angular2/angular2';
 
 @Component({
   selector: 'issue',
   properties: {'issue': 'issue', 'compact': 'compact'}
 })
 @View({
-  directives: [NgIf]
   template: `
   <div>
     {{perfIcon()}}{{typeIcon()}}{{effortIcon()}}<a target="_blank" [href]="issue.html_url">{{issue.number}}</a>
-    <span *ng-if="!compact"><a [href]="issue.html_url">{{issue.title}}</a></span>
+    <span [hidden]="compact">
+      <a target="_blank" [href]="issue.html_url">{{issue.title}}</a>
+      [ {{issue.comp}} ]
+    </span>
   </div>
   `
 })

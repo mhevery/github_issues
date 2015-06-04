@@ -14,7 +14,7 @@ interface Issue {
   assignee: Assignee;
   
   priority: string;
-  component: string;
+  comp: string;
   type: string;
   effort: string;
   pr_state: string;
