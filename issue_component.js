@@ -12,6 +12,7 @@ if (typeof __metadata !== "function") __metadata = function (k, v) {
 var angular2_1 = require('angular2/angular2');
 var IssueComponent = (function () {
     function IssueComponent() {
+        this.compact = false;
     }
     IssueComponent.prototype.perfIcon = function () {
         switch (this.issue.priority) {
@@ -21,24 +22,37 @@ var IssueComponent = (function () {
             case 'P3': return '3⃣';
             case 'P4': return '4⃣';
             case 'P5': return '5⃣';
-            default: return '❓';
+            default: return IssueComponent.NOT_FOUND;
         }
     };
     IssueComponent.prototype.effortIcon = function () {
         switch (this.issue.effort) {
-            case 'easy': return '😀';
-            case 'medium': return '😐';
-            case 'tough': return '😕';
-            default: return '❓';
+            case 'easy': return '▏';
+            case 'medium': return '▌';
+            case 'tough': return '█';
+            default: return IssueComponent.NOT_FOUND;
         }
     };
+    IssueComponent.prototype.typeIcon = function () {
+        switch (this.issue.type) {
+            case 'RFC': return '❔';
+            case 'bug': return '🐛';
+            case 'feature': return '➕';
+            case 'perf': return '📊';
+            case 'refactor': return '❤';
+            case 'chore': return '🔧';
+            default: return IssueComponent.NOT_FOUND;
+        }
+    };
+    IssueComponent.NOT_FOUND = '⁉';
     IssueComponent = __decorate([
         angular2_1.Component({
             selector: 'issue',
-            properties: { 'issue': 'issue' }
+            properties: { 'issue': 'issue', 'compact': 'compact' }
         }),
         angular2_1.View({
-            template: "\n  <div>\n    <a target=\"_blank\" [href]=\"issue.html_url\">{{perfIcon()}}{{effortIcon()}}{{issue.number}}</a>\n    <!--<a [href]=\"issue.html_url\">{{issue.title}}</a>-->\n  </div>\n  "
+            directives: [angular2_1.NgIf],
+            template: "\n  <div>\n    {{perfIcon()}}{{typeIcon()}}{{effortIcon()}}<a target=\"_blank\" [href]=\"issue.html_url\">{{issue.number}}</a>\n    <span *ng-if=\"!compact\"><a [href]=\"issue.html_url\">{{issue.title}}</a></span>\n  </div>\n  "
         }), 
         __metadata('design:paramtypes', [])
     ], IssueComponent);

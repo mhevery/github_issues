@@ -35,78 +35,64 @@ function byMilestonPane(a: MilestonePane, b:MilestonePane): number {
   template: `
   <h1>GitHub</h1>
   <button (click)="loadIssues()">Load Issues {{repo.state}}</button>
-  Action: [ <a href (click)="setupAuthToken(); false">Github Auth Token</a> 
+  Action: [ <a href (click)="setupAuthToken(); false">{{hasAuthToken() ? 'Using' : 'Needs'}} Github Auth Token</a> 
           (<a href="https://github.com/settings/developers" target="_blank">Get Token</a>) ]
   
-  <h1>Issue Triage</h1>
-  Issues: {{triageIssues.items.length}}
-  <table>
+  <h1>Triage</h1>
+  <table border=1>
     <tr>
-      <th>#</th>
-      <th>Description</th>
-      <th>Milestone</th>
-      <th>Priority</th>
-      <th>Component</th>
-      <th>Type</th>
-      <th>Effort</th>
-      <th>Customer</th>
-      <th>Labels</th>
+      <th><h2>Issues {{triageIssues.items.length}}</h2></th>
+      <th><h2>PRs {{prIssues.items.length}}</h2></th>
     </tr>
-    <tr *ng-for="var issue of triageIssues.items">
-      <td><a target="_blank"  [href]="issue.html_url">#{{issue.number}}</a></td>
-      <td><a target="_blank"  [href]="issue.html_url">{{issue.title}}</a></td>
-      <td><a target="_blank" [href]="(issue.milestone || {}).html_url">{{(issue.milestone||{}).title}}</a></td>
-      <td nowrap>{{issue.priority}}</td>
-      <td nowrap>{{issue.comp}}</td>
-      <td nowrap>{{issue.type}}</td>
-      <td nowrap>{{issue.effort}}</td>
-      <td nowrap>{{issue.cust}}</td>
-      <td>{{issue.labels_other.join('; ')}}</td>
+    <tr>
+      <td valign="top" width="50%">
+        <issue *ng-for="var issue of triageIssues.items" [issue]="issue"></issue>
+      </td>
+      <td valign="top" width="50%">
+        <table>
+            <tr>
+              <th>PR#</th>
+              <th>Description</th>
+              <th>PR State</th>
+              <th>PR Action</th>
+              <th>Priority</th>
+              <th>Customer</th>
+              <th>Labels</th>
+              <th>Assigned</th>
+            </tr>
+            <tr *ng-for="var issue of prIssues.items">
+              <td><a target="_blank"  [href]="issue.html_url">#{{issue.number}}</a></td>
+              <td><a target="_blank"  [href]="issue.html_url">{{issue.title}}</a></td>
+              <td nowrap>{{issue.pr_state}}</td>
+              <td nowrap>{{issue.pr_action}}</td>
+              <td nowrap>{{issue.priority}}</td>
+              <td nowrap>{{issue.cust}}</td>
+              <td>{{issue.labels_other.join('; ')}}</td>
+              <td><a href="{{}}" target="_blank"><img width="15" height="15" [hidden]="!issue.assignee" [src]="(issue.assignee||{}).avatar_url || ''"> {{(issue.assignee||{}).login}}</a></td>
+            </tr>
+          </table>
+      </td>
     </tr>
   </table>
   
-  <h1>PR Triage</h1>
-  PRs: {{prIssues.items.length}}
-  <table>
-    <tr>
-      <th>PR#</th>
-      <th>Description</th>
-      <th>PR State</th>
-      <th>PR Action</th>
-      <th>Priority</th>
-      <th>Customer</th>
-      <th>Labels</th>
-      <th>Assigned</th>
-    </tr>
-    <tr *ng-for="var issue of prIssues.items">
-      <td><a target="_blank"  [href]="issue.html_url">#{{issue.number}}</a></td>
-      <td><a target="_blank"  [href]="issue.html_url">{{issue.title}}</a></td>
-      <td nowrap>{{issue.pr_state}}</td>
-      <td nowrap>{{issue.pr_action}}</td>
-      <td nowrap>{{issue.priority}}</td>
-      <td nowrap>{{issue.cust}}</td>
-      <td>{{issue.labels_other.join('; ')}}</td>
-      <td><a href="{{}}" target="_blank"><img width="15" height="15" [hidden]="!issue.assignee" [src]="(issue.assignee||{}).avatar_url || ''"> {{(issue.assignee||{}).login}}</a></td>
-    </tr>
-  </table>
-  
+      
   <h1>Milestone</h1>
   <div *ng-for="var milestonePane of milestones.items">
     <h2><a target="_blank" [href]="milestonePane.milestone.html_url">
         {{milestonePane.milestone.title}}</a></h2>
     <table>
       <tr>
-        <th>Not Assigned</th>
-        <th *ng-for="var assigneePane of milestonePane.asignees.items">
+        <th><a href="https://github.com/angular/angular/issues?q=is%3Aopen+is%3Aissue+no%3Aassignee" target="_blank">!Assigned</a></th>
+        <th *ng-for="var assigneePane of milestonePane.assignees.items">
           <img width="15" height="15" [src]="assigneePane.assignee.avatar_url || ''">
-           {{assigneePane.assignee.login}}</a></th>
+           <a href="https://github.com/angular/angular/issues/assigned/{{assigneePane.assignee.login}}" target="_blank">{{assigneePane.assignee.login}}</a></th>
       </tr>
       <tr>
         <td valign="top">
           <issue *ng-for="var issue of milestonePane.noAssignee.items" [issue]="issue"></issue>
         </td>
-        <td *ng-for="var assigneePane of milestonePane.asignees.items" valign="top">
-          <issue *ng-for="var issue of assigneePane.issues.items" [issue]="issue"></issue>
+        <td *ng-for="var assigneePane of milestonePane.assignees.items" valign="top">
+          <issue *ng-for="var issue of assigneePane.issues.items" [issue]="issue" [compact]="true"></issue>
         </td>
       </tr>
     </table>
@@ -150,6 +136,11 @@ export class GithubIssues {
     localStorage.setItem('github.client_id', prompt("Github 'client_id':"));
     localStorage.setItem('github.client_secret', prompt("Github 'client_sceret':"));
   }
+  
+  hasAuthToken() { 
+    return localStorage.getItem('github.client_id') 
+        && localStorage.getItem('github.client_secret');
+  }
 }
 
 function byAssigneePane(a: AssigneePane, b: AssigneePane) {
@@ -158,7 +149,7 @@ function byAssigneePane(a: AssigneePane, b: AssigneePane) {
 
 class MilestonePane {
   number: number;
-  asignees = new OrderedSet<AssigneePane>(byAssigneePane);
+  assignees = new OrderedSet<AssigneePane>(byAssigneePane);
   noAssignee = new OrderedSet<Issue>(byNumber);
   
   constructor(public milestone: Milestone) {
@@ -167,7 +158,7 @@ class MilestonePane {
   
   add(issue:Issue) {
     if (issue.assignee) {
-      this.asignees.setIfAbsent(new AssigneePane(issue.assignee)).add(issue);
+      this.assignees.setIfAbsent(new AssigneePane(issue.assignee)).add(issue);
     } else {
       this.noAssignee.set(issue);
     }
