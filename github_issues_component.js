@@ -35,7 +35,7 @@ function byPR(a, b) {
         return _strCmp(a.pr_state, b.pr_state);
     return a.number - b.number;
 }
-function byMilestonPane(a, b) {
+function byMilestonGroup(a, b) {
     if (a.milestone.title == b.milestone.title)
         return 0;
     return a.milestone.title < b.milestone.title ? -1 : 1;
@@ -45,7 +45,7 @@ var GithubIssues = (function () {
         this.triageIssues = new set_1.OrderedSet(byNumber);
         this.prIssues = new set_1.OrderedSet(byPR);
         this.repo = new github_1.Repository("angular", "angular");
-        this.milestones = new set_1.OrderedSet(byMilestonPane);
+        this.milestones = new set_1.OrderedSet(byMilestonGroup);
         this.noMilestone = new set_1.OrderedSet(byNumber);
         this.repo.onNewIssue = this.onNewIssue.bind(this);
         this.repo.onNewPR = this.onNewPr.bind(this);
@@ -59,7 +59,7 @@ var GithubIssues = (function () {
             this.triageIssues.set(issue);
         }
         else if (issue.milestone) {
-            this.milestones.setIfAbsent(new MilestonePane(issue.milestone)).add(issue);
+            this.milestones.setIfAbsent(new MilestoneGroup(issue.milestone)).add(issue);
         }
         else {
             this.noMilestone.set(issue);
@@ -82,50 +82,60 @@ var GithubIssues = (function () {
         }),
         angular2_1.View({
             directives: [angular2_1.NgFor, issue_component_1.IssueComponent],
-            template: "\n  <h1>GitHub</h1>\n  <button (click)=\"loadIssues()\">Load Issues {{repo.state}}</button>\n  Action: [ <a href (click)=\"setupAuthToken(); false\">{{hasAuthToken() ? 'Using' : 'Needs'}} Github Auth Token</a> \n          (<a href=\"https://github.com/settings/developers\" target=\"_blank\">Get Token</a>) ]\n  \n  <h1>Triage</h1>\n  <table border=1 cellspacing=0>\n    <tr>\n      <th><h2>Issues {{triageIssues.items.length}}</h2></th>\n      <th><h2>PRs {{prIssues.items.length}}</h2></th>\n    </tr>\n    <tr>\n      <td valign=\"top\" width=\"50%\">\n        <issue *ng-for=\"var issue of triageIssues.items\" [issue]=\"issue\"></issue>\n      </td>\n      <td valign=\"top\" width=\"50%\">\n        <table>\n            <tr>\n              <th>PR#</th>\n              <th>Description</th>\n              <th>PR State</th>\n              <th>PR Action</th>\n              <th>Priority</th>\n              <th>Customer</th>\n              <th>Labels</th>\n              <th>Assigned</th>\n            </tr>\n            <tr *ng-for=\"var issue of prIssues.items\">\n              <td><a target=\"_blank\"  [href]=\"issue.html_url\">#{{issue.number}}</a></td>\n              <td><a target=\"_blank\"  [href]=\"issue.html_url\">{{issue.title}}</a></td>\n              <td nowrap>{{issue.pr_state}}</td>\n              <td nowrap>{{issue.pr_action}}</td>\n              <td nowrap>{{issue.priority}}</td>\n              <td nowrap>{{issue.cust}}</td>\n              <td>{{issue.labels_other.join('; ')}}</td>\n              <td><a href=\"{{}}\" target=\"_blank\"><img width=\"15\" height=\"15\" [hidden]=\"!issue.assignee\" [src]=\"(issue.assignee||{}).avatar_url || ''\"> {{(issue.assignee||{}).login}}</a></td>\n            </tr>\n          </table>\n      </td>\n    </tr>\n  </table>\n  \n      \n  <h1>Milestone</h1>\n  <div *ng-for=\"var milestonePane of milestones.items\">\n    <h2><a target=\"_blank\" [href]=\"milestonePane.milestone.html_url\">\n        {{milestonePane.milestone.title}}</a></h2>\n    <table border=1 cellspacing=0>\n      <tr>\n        <th><a href=\"https://github.com/angular/angular/issues?q=is%3Aopen+is%3Aissue+no%3Aassignee\" target=\"_blank\">!Assigned</a></th>\n        <th *ng-for=\"var assigneePane of milestonePane.assignees.items\">\n          <img width=\"15\" height=\"15\" [src]=\"assigneePane.assignee.avatar_url || ''\">\n           <a href=\"https://github.com/angular/angular/issues/assigned/{{assigneePane.assignee.login}}\" target=\"_blank\">{{assigneePane.assignee.login}}</a></th>\n      </tr>\n      <tr>\n        <td valign=\"top\">\n          <issue *ng-for=\"var issue of milestonePane.noAssignee.items\" [issue]=\"issue\"></issue>\n        </td>\n        <td *ng-for=\"var assigneePane of milestonePane.assignees.items\" valign=\"top\">\n          <issue *ng-for=\"var issue of assigneePane.issues.items\" [issue]=\"issue\" [compact]=\"true\"></issue>\n        </td>\n      </tr>\n    </table>\n    \n  </div>\n  "
+            template: "\n  <h1>GitHub</h1>\n  <button (click)=\"loadIssues()\">Load Issues {{repo.state}}</button>\n  Action: [ <a href (click)=\"setupAuthToken(); false\">{{hasAuthToken() ? 'Using' : 'Needs'}} Github Auth Token</a> \n          (<a href=\"https://github.com/settings/developers\" target=\"_blank\">Get Token</a>) ]\n  \n  <h1>Triage</h1>\n  <table border=1 cellspacing=0>\n    <tr>\n      <th><h2>Issues {{triageIssues.items.length}}</h2></th>\n      <th><h2>PRs {{prIssues.items.length}}</h2></th>\n    </tr>\n    <tr>\n      <td valign=\"top\" width=\"50%\">\n        <issue *ng-for=\"var issue of triageIssues.items\" [issue]=\"issue\"></issue>\n      </td>\n      <td valign=\"top\" width=\"50%\">\n        <table>\n            <tr>\n              <th>PR#</th>\n              <th>Description</th>\n              <th>PR State</th>\n              <th>PR Action</th>\n              <th>Priority</th>\n              <th>Customer</th>\n              <th>Labels</th>\n              <th>Assigned</th>\n            </tr>\n            <tr *ng-for=\"var issue of prIssues.items\">\n              <td><a target=\"_blank\"  [href]=\"issue.html_url\">#{{issue.number}}</a></td>\n              <td><a target=\"_blank\"  [href]=\"issue.html_url\">{{issue.title}}</a></td>\n              <td nowrap>{{issue.pr_state}}</td>\n              <td nowrap>{{issue.pr_action}}</td>\n              <td nowrap>{{issue.priority}}</td>\n              <td nowrap>{{issue.cust}}</td>\n              <td>{{issue.labels_other.join('; ')}}</td>\n              <td><a href=\"{{}}\" target=\"_blank\"><img width=\"15\" height=\"15\" [hidden]=\"!issue.assignee\" [src]=\"(issue.assignee||{}).avatar_url || ''\"> {{(issue.assignee||{}).login}}</a></td>\n            </tr>\n          </table>\n      </td>\n    </tr>\n  </table>\n  \n      \n  <h1>Milestone</h1>\n  <div *ng-for=\"var milestoneGroup of milestones.items\">\n    <h2><a target=\"_blank\" [href]=\"milestoneGroup.milestone.html_url\">\n        {{milestoneGroup.milestone.title}}</a></h2>\n    <table border=1 cellspacing=0>\n      <tr>\n        <th><a href=\"https://github.com/angular/angular/issues?q=is%3Aopen+is%3Aissue+no%3Aassignee\" target=\"_blank\">!Assigned</a></th>\n        <th *ng-for=\"var assigneeGroup of milestoneGroup.assignees.items\">\n          <img width=\"15\" height=\"15\" [src]=\"assigneeGroup.assignee.avatar_url || ''\">\n           <a href=\"https://github.com/angular/angular/issues/assigned/{{assigneeGroup.assignee.login}}\" target=\"_blank\">{{assigneeGroup.assignee.login}}</a></th>\n      </tr>\n      <tr>\n        <td valign=\"top\">\n          <issue *ng-for=\"var issue of milestoneGroup.noAssignee.items\" [issue]=\"issue\"></issue>\n        </td>\n        <td *ng-for=\"var assigneeGroup of milestoneGroup.assignees.items\" valign=\"top\">\n          <issue *ng-for=\"var issue of assigneeGroup.issues.items\" [issue]=\"issue\" [compact]=\"true\"></issue>\n        </td>\n      </tr>\n    </table>    \n  </div>\n  \n  <h1>Backlog</h1>\n  <!--\n  <table border=1 cellspacing=0>\n    <tr>\n      <th *ng-for=\"var componentGroup of backlog.components.items\">\n        <img width=\"15\" height=\"15\" [src]=\"assigneeGroup.assignee.avatar_url || ''\">\n         <a href=\"https://github.com/angular/angular/issues/assigned/{{assigneeGroup.assignee.login}}\" target=\"_blank\">{{assigneeGroup.assignee.login}}</a></th>\n    </tr>\n    <tr>\n      <td *ng-for=\"var componentGroup of backlog.components.items\" valign=\"top\">\n        <issue *ng-for=\"var issue of assigneeGroup.issues.items\" [issue]=\"issue\" [compact]=\"true\"></issue>\n      </td>\n    </tr>\n  </table>    \n  -->  \n  "
         }), 
         __metadata('design:paramtypes', [])
     ], GithubIssues);
     return GithubIssues;
 })();
 exports.GithubIssues = GithubIssues;
-function byAssigneePane(a, b) {
+function byAssigneeGroup(a, b) {
     return _strCmp(a.assignee.login, b.assignee.login);
 }
-var MilestonePane = (function () {
-    function MilestonePane(milestone) {
+var MilestoneGroup = (function () {
+    function MilestoneGroup(milestone) {
         this.milestone = milestone;
-        this.assignees = new set_1.OrderedSet(byAssigneePane);
+        this.assignees = new set_1.OrderedSet(byAssigneeGroup);
         this.noAssignee = new set_1.OrderedSet(byNumber);
         this.number = milestone.number;
     }
-    MilestonePane.prototype.add = function (issue) {
+    MilestoneGroup.prototype.add = function (issue) {
         if (issue.assignee) {
-            this.assignees.setIfAbsent(new AssigneePane(issue.assignee)).add(issue);
+            this.assignees.setIfAbsent(new AssigneeGroup(issue.assignee)).add(issue);
         }
         else {
             this.noAssignee.set(issue);
         }
     };
-    return MilestonePane;
+    return MilestoneGroup;
 })();
-var AssigneePane = (function () {
-    function AssigneePane(assignee) {
+function byPriority(a, b) {
+    if (a.number === b.number)
+        return 0;
+    if (a.priority != b.priority)
+        return _strCmp(a.priority, b.priority);
+    if (a.effort != b.effort)
+        return _strCmp(a.effort, b.effort);
+    return a.number - b.number;
+}
+var AssigneeGroup = (function () {
+    function AssigneeGroup(assignee) {
         this.assignee = assignee;
-        this.issues = new set_1.OrderedSet(AssigneePane.byPriority);
+        this.issues = new set_1.OrderedSet(byPriority);
     }
-    AssigneePane.byPriority = function (a, b) {
-        if (a.number === b.number)
-            return 0;
-        if (a.priority != b.priority)
-            return _strCmp(a.priority, b.priority);
-        if (a.effort != b.effort)
-            return _strCmp(a.effort, b.effort);
-        return a.number - b.number;
-    };
-    AssigneePane.prototype.add = function (issue) {
+    AssigneeGroup.prototype.add = function (issue) {
         this.issues.set(issue);
     };
-    return AssigneePane;
+    return AssigneeGroup;
+})();
+var ComponentGroup = (function () {
+    function ComponentGroup(name) {
+        this.name = name;
+        this.issues = new set_1.OrderedSet(byPriority);
+    }
+    ComponentGroup.prototype.add = function (issue) {
+        this.issues.set(issue);
+    };
+    return ComponentGroup;
 })();
 //# sourceMappingURL=github_issues_component.js.map

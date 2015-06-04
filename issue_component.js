@@ -14,7 +14,7 @@ var IssueComponent = (function () {
     function IssueComponent() {
         this.compact = false;
     }
-    IssueComponent.prototype.perfIcon = function () {
+    IssueComponent.prototype.periorityIcon = function () {
         switch (this.issue.priority) {
             case 'P0': return '0⃣';
             case 'P1': return '1⃣';
@@ -51,7 +51,7 @@ var IssueComponent = (function () {
             properties: { 'issue': 'issue', 'compact': 'compact' }
         }),
         angular2_1.View({
-            template: "\n  <div>\n    {{perfIcon()}}{{typeIcon()}}{{effortIcon()}}<a target=\"_blank\" [href]=\"issue.html_url\">{{issue.number}}</a>\n    <span [hidden]=\"compact\">\n      <a target=\"_blank\" [href]=\"issue.html_url\">{{issue.title}}</a>\n      [ {{issue.comp}} ]\n    </span>\n  </div>\n  "
+            template: "\n  <div>\n    <span title=\"{{issue.priority}}\">{{periorityIcon()}}</span><span title=\"{{issue.type}}\">{{typeIcon()}}</span><span title=\"{{issue.effort}}\">{{effortIcon()}}</span><a target=\"_blank\" title=\"{{issue.title}}\" [href]=\"issue.html_url\">{{issue.number}}</a>\n    <span [hidden]=\"compact\">\n      <a target=\"_blank\" [href]=\"issue.html_url\">{{issue.title}}</a>\n      [ {{issue.comp}} ]\n    </span>\n  </div>\n  "
         }), 
         __metadata('design:paramtypes', [])
     ], IssueComponent);

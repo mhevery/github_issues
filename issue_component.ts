@@ -7,7 +7,7 @@ import {Component, View} from 'angular2/angular2';
 @View({
   template: `
   <div>
-    {{perfIcon()}}{{typeIcon()}}{{effortIcon()}}<a target="_blank" [href]="issue.html_url">{{issue.number}}</a>
+    <span title="{{issue.priority}}">{{periorityIcon()}}</span><span title="{{issue.type}}">{{typeIcon()}}</span><span title="{{issue.effort}}">{{effortIcon()}}</span><a target="_blank" title="{{issue.title}}" [href]="issue.html_url">{{issue.number}}</a>
     <span [hidden]="compact">
       <a target="_blank" [href]="issue.html_url">{{issue.title}}</a>
       [ {{issue.comp}} ]
@@ -21,7 +21,7 @@ export class IssueComponent {
   issue: Issue;
   compact = false;
   
-  perfIcon() {
+  periorityIcon() {
     switch (this.issue.priority) {
       case 'P0': return '0⃣';
       case 'P1': return '1⃣';

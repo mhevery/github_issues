@@ -22,7 +22,7 @@ function byPR(a: Issue, b:Issue): number {
   return a.number - b.number;
 }
 
-function byMilestonPane(a: MilestonePane, b:MilestonePane): number {
+function byMilestonGroup(a: MilestoneGroup, b:MilestoneGroup): number {
   if (a.milestone.title == b.milestone.title) return 0;
   return a.milestone.title < b.milestone.title ? -1 : 1; 
 }
@@ -77,34 +77,49 @@ function byMilestonPane(a: MilestonePane, b:MilestonePane): number {
   
       
   <h1>Milestone</h1>
-  <div *ng-for="var milestonePane of milestones.items">
-    <h2><a target="_blank" [href]="milestonePane.milestone.html_url">
-        {{milestonePane.milestone.title}}</a></h2>
+  <div *ng-for="var milestoneGroup of milestones.items">
+    <h2><a target="_blank" [href]="milestoneGroup.milestone.html_url">
+        {{milestoneGroup.milestone.title}}</a></h2>
     <table border=1 cellspacing=0>
       <tr>
         <th><a href="https://github.com/angular/angular/issues?q=is%3Aopen+is%3Aissue+no%3Aassignee" target="_blank">!Assigned</a></th>
-        <th *ng-for="var assigneePane of milestonePane.assignees.items">
-          <img width="15" height="15" [src]="assigneePane.assignee.avatar_url || ''">
-           <a href="https://github.com/angular/angular/issues/assigned/{{assigneePane.assignee.login}}" target="_blank">{{assigneePane.assignee.login}}</a></th>
+        <th *ng-for="var assigneeGroup of milestoneGroup.assignees.items">
+          <img width="15" height="15" [src]="assigneeGroup.assignee.avatar_url || ''">
+           <a href="https://github.com/angular/angular/issues/assigned/{{assigneeGroup.assignee.login}}" target="_blank">{{assigneeGroup.assignee.login}}</a></th>
       </tr>
       <tr>
         <td valign="top">
-          <issue *ng-for="var issue of milestonePane.noAssignee.items" [issue]="issue"></issue>
+          <issue *ng-for="var issue of milestoneGroup.noAssignee.items" [issue]="issue"></issue>
         </td>
-        <td *ng-for="var assigneePane of milestonePane.assignees.items" valign="top">
-          <issue *ng-for="var issue of assigneePane.issues.items" [issue]="issue" [compact]="true"></issue>
+        <td *ng-for="var assigneeGroup of milestoneGroup.assignees.items" valign="top">
+          <issue *ng-for="var issue of assigneeGroup.issues.items" [issue]="issue" [compact]="true"></issue>
         </td>
       </tr>
-    </table>
-    
+    </table>    
   </div>
+  
+  <h1>Backlog</h1>
+  <!--
+  <table border=1 cellspacing=0>
+    <tr>
+      <th *ng-for="var componentGroup of backlog.components.items">
+        <img width="15" height="15" [src]="assigneeGroup.assignee.avatar_url || ''">
+         <a href="https://github.com/angular/angular/issues/assigned/{{assigneeGroup.assignee.login}}" target="_blank">{{assigneeGroup.assignee.login}}</a></th>
+    </tr>
+    <tr>
+      <td *ng-for="var componentGroup of backlog.components.items" valign="top">
+        <issue *ng-for="var issue of assigneeGroup.issues.items" [issue]="issue" [compact]="true"></issue>
+      </td>
+    </tr>
+  </table>    
+  -->  
   `
 })
 export class GithubIssues {
   triageIssues = new OrderedSet<Issue>(byNumber);
   prIssues = new OrderedSet<Issue>(byPR);
   repo = new Repository("angular", "angular");
-  milestones = new OrderedSet<MilestonePane>(byMilestonPane);
+  milestones = new OrderedSet<MilestoneGroup>(byMilestonGroup);
   noMilestone = new OrderedSet<Issue>(byNumber);
 
   
@@ -122,7 +137,7 @@ export class GithubIssues {
     if (issue.needsTriage()) {
       this.triageIssues.set(issue);
     } else if (issue.milestone) {
-      this.milestones.setIfAbsent(new MilestonePane(issue.milestone)).add(issue);
+      this.milestones.setIfAbsent(new MilestoneGroup(issue.milestone)).add(issue);
     } else {
       this.noMilestone.set(issue);
     }
@@ -143,13 +158,13 @@ export class GithubIssues {
   }
 }
 
-function byAssigneePane(a: AssigneePane, b: AssigneePane) {
+function byAssigneeGroup(a: AssigneeGroup, b: AssigneeGroup) {
   return _strCmp(a.assignee.login, b.assignee.login);
 }
 
-class MilestonePane {
+class MilestoneGroup {
   number: number;
-  assignees = new OrderedSet<AssigneePane>(byAssigneePane);
+  assignees = new OrderedSet<AssigneeGroup>(byAssigneeGroup);
   noAssignee = new OrderedSet<Issue>(byNumber);
   
   constructor(public milestone: Milestone) {
@@ -158,24 +173,23 @@ class MilestonePane {
   
   add(issue:Issue) {
     if (issue.assignee) {
-      this.assignees.setIfAbsent(new AssigneePane(issue.assignee)).add(issue);
+      this.assignees.setIfAbsent(new AssigneeGroup(issue.assignee)).add(issue);
     } else {
       this.noAssignee.set(issue);
     }
   }
 }
 
+function byPriority(a: Issue, b:Issue): number {
+  if (a.number === b.number) return 0;
+  if (a.priority != b.priority) return _strCmp(a.priority, b.priority);
+  if (a.effort != b.effort) return _strCmp(a.effort, b.effort);
+  return a.number - b.number;
+}
 
-class AssigneePane {
-  static byPriority(a: Issue, b:Issue): number {
-    if (a.number === b.number) return 0;
-    if (a.priority != b.priority) return _strCmp(a.priority, b.priority);
-    if (a.effort != b.effort) return _strCmp(a.effort, b.effort);
-    return a.number - b.number;
-  }
-  
-  
-  issues = new OrderedSet<Issue>(AssigneePane.byPriority);
+
+class AssigneeGroup {
+  issues = new OrderedSet<Issue>(byPriority);
   constructor(public assignee:Assignee) { }
   
   add(issue: Issue) {
@@ -183,3 +197,12 @@ class AssigneePane {
   }
 }
 
+class ComponentGroup {
+  issues = new OrderedSet<Issue>(byPriority);
+  
+  constructor(public name:string) { }
+  
+  add(issue:Issue) {
+    this.issues.set(issue);
+  }  
+}
