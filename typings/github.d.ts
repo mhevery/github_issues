@@ -11,7 +11,7 @@ interface Issue {
   labels: Array<Label>,
   milestone: Milestone,
   pull_request: PullRequest,
-  asignee: Asignee;
+  assignee: Assignee;
   
   priority: string;
   component: string;
@@ -30,7 +30,7 @@ interface PullRequest {
   
 }
 
-interface Asignee {
+interface Assignee {
   login: string;
   id: number;
   avatar_url: string;
