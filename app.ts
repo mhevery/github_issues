@@ -2,8 +2,31 @@
 /// <reference path="typings/github.d.ts" />
 
 import {Component, View, bootstrap, NgFor} from 'angular2/angular2';
+import {Repository} from 'github';
+import {OrderedSet} from 'set';
 
-function get_number(i:any) {return i.number;}
+function _strCmp(a: string, b: string) {
+  if (a === undefined) a = '';
+  if (b === undefined) b = '';
+  if (a === b) return 0;
+  return a < b ? -1 : 1;
+}
+
+function byNumber(a: Issue, b:Issue): number {
+  return a.number - b.number;
+}
+
+function byPR(a: Issue, b:Issue): number {
+  if (a.number === b.number) return 0;
+  if (a.pr_action != b.pr_action) return _strCmp(a.pr_action, b.pr_action);
+  if (a.pr_state != b.pr_state) return _strCmp(a.pr_state, b.pr_state);
+  return a.number - b.number;
+}
+
+function byMilestonPane(a: MilestonePane, b:MilestonePane): number {
+  if (a.milestone.title == b.milestone.title) return 0;
+  return a.milestone.title < b.milestone.title ? -1 : 1; 
+}
 
 @Component({
 	selector: 'github-issues'
@@ -76,11 +99,11 @@ function get_number(i:any) {return i.number;}
   `
 })
 class GithubIssues {
-  triageIssues = new Set<Issue>(get_number);
-  prIssues = new Set<Issue>(get_number);
+  triageIssues = new OrderedSet<Issue>(byNumber);
+  prIssues = new OrderedSet<Issue>(byPR);
   repo = new Repository("angular", "angular");
-  milestones = new Set<MilestonePane>(get_number);
-  noMilestone = new Set<Issue>(get_number);
+  milestones = new OrderedSet<MilestonePane>(byMilestonPane);
+  noMilestone = new OrderedSet<Issue>(byNumber);
 
   
   constructor() {
@@ -97,12 +120,7 @@ class GithubIssues {
     if (issue.needsTriage()) {
       this.triageIssues.set(issue);
     } else if (issue.milestone) {
-      var milestonePane = this.milestones.getByKey(issue.milestone.number);
-      if (!milestonePane) {
-        milestonePane = new MilestonePane(issue.milestone);
-        this.milestones.set(milestonePane);
-      }
-      milestonePane.add(issue);
+      this.milestones.setIfAbsent(new MilestonePane(issue.milestone)).add(issue);
     } else {
       this.noMilestone.set(issue);
     }
@@ -118,171 +136,36 @@ class GithubIssues {
   }
 }
 
+function byAssigneePane(a: AsigneePane, b: AsigneePane) {
+  return _strCmp(a.asignee.login, b.asignee.login);
+}
+
 class MilestonePane {
   number: number;
-  asignees: Array<AsigneePane> = [];
+  asignees = new OrderedSet<AsigneePane>(byAssigneePane);
+  notAssignee = new OrderedSet<Issue>(byNumber);
   
   constructor(public milestone: Milestone) {
     this.number = milestone.number;
   }
   
-  add(issue:Issue) {}
+  add(issue:Issue) {
+    if (issue.asignee) {
+      this.asignees.setIfAbsent(new AsigneePane(issue.asignee)).add(issue);
+    } else {
+      this.notAssignee.set(issue);
+    }
+  }
 }
 
 class AsigneePane {
+  issues = new OrderedSet<Issue>(byNumber);
+  constructor(public asignee:Asignee) { }
   
-}
-
-class Set<T> {
-  keys: { [s: number]: T; } = {};
-  items: Array<T> = [];
-  
-  constructor(public keyGetter:(t:T) => number) {}
-  
-  getByKey(key: number) {
-    return this.keys[key];
-  }
-  
-  set(item: T):T {
-    var key = this.keyGetter(item);
-    var oldItem = this.keys[key];
-    if (oldItem) {
-      var index = this.items.indexOf(oldItem);
-      this.items[index] = item;
-    } else {
-      this.items.push(item);
-    }
-    this.keys[key] = item;
-    return item;
+  add(issue: Issue) {
+    this.issues.set(issue);
   }
 }
 
-
-class Repository {
-  state: string;
-  
-  issues:  { [s: string]: Issue; } = {};
-  previousIssues:  { [s: string]: Issue; } = {};
-  prs:  { [s: string]: Issue; } = {};
-  previousPrs:  { [s: string]: Issue; } = {};
-  
-  onNewIssue: (issue: Issue) => void = () => null;
-  onRemovedIssue: (issue: Issue) => void = () => null;
-  onNewPR: (issue: Issue) => void = () => null;
-  onRemovedPR: (issue: Issue) => void = () => null;
-  
-  constructor(public username: string, public repository: string) {
-    this.state = '';
-  }
-  
-  clientId() {
-    return localStorage.getItem('github.client_id');
-  }
-  
-  clientSecret() {
-    return localStorage.getItem('github.client_secret');
-  }
-  
-  refresh() {
-    this.state = 'refreshing';
-    this.previousIssues = this.issues;
-    this.previousPrs = this.prs;
-    
-    var fetchPage = (page: number) => {
-      var http = new XMLHttpRequest();
-      var params = `client_id=${this.clientId()}&client_secret=${this.clientSecret()}&per_page=100&page=${page}`;
-      var url = `https://api.github.com/repos/angular/angular/issues?${params}`;
-      http.open("GET", url, true);
-      
-      http.onreadystatechange = () => {
-        var response = http.responseText;
-        if (http.readyState == 4) {
-          if(http.status == 200) {
-            var issues: Array<Issue> = JSON.parse(response);
-            issues.forEach(this._processIssues.bind(this));
-            if (issues.length >= 100) {
-              fetchPage(page + 1);
-            } else {
-              this.state = '';
-              this._notifyRemoves();
-            }
-          } else {
-            console.error(response);
-          }
-        }
-      }
-      http.send(params);
-    }
-    fetchPage(0);
-  }
-  
-  _processIssues(issue: Issue) {
-    this._parseLabels(issue);
-    issue.needsTriage = function() {
-      if (this.pull_requst) {
-        return false;
-      } else {
-        return !this.type || !this.priority || !this.comp || !this.effort;
-      }
-    }
-
-    if (issue.pull_request) {
-      this.issues[issue.number] = issue;
-      this.onNewPR(issue);
-    } else {
-      this.prs[issue.number] = issue;
-      this.onNewIssue(issue);
-    }
-  }
-
-  _notifyRemoves() {
-    for(var issueNo in this.previousIssues) {
-      if (!this.issues[issueNo]) {
-        this.onRemovedIssue(this.previousIssues[issueNo]);
-      }
-    }
-    for(var prNo in this.previousPrs) {
-      if (!this.prs[prNo]) {
-        this.onRemovedIssue(this.previousPrs[prNo]);
-      }
-    }
-  }
-
-  _parseLabels(issue: Issue) {
-    var other = issue.labels_other = [];
-    issue.priority = '';
-    issue.type = '';
-    issue.component = '';
-    
-    issue.labels.forEach((label: Label) => {
-      var split = label.name.split(':');
-      var name = split[0];
-      var value = split[1];
-      if (value) {
-        value = value.split('/')[0].trim();
-      }
-      switch (name) {
-        case 'P0':
-        case 'P1':
-        case 'P2':
-        case 'P3':
-        case 'P4':
-          value = name;
-          name = 'priority';
-        case 'comp':
-        case 'cla':
-        case 'pr_state':
-        case 'pr_action':
-        case 'cust':
-        case 'effort':
-        case 'type':
-          issue[name] = (issue[name] ? issue[name] + '; ' : '') + value;
-          break;
-        default:
-          other.push(label.name);
-      }
-    }); 
-  }
-}
 
 bootstrap(GithubIssues);

@@ -12,14 +12,41 @@ if (typeof __metadata !== "function") __metadata = function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 var angular2_1 = require('angular2/angular2');
-function get_number(i) { return i.number; }
+var github_1 = require('github');
+var set_1 = require('set');
+function _strCmp(a, b) {
+    if (a === undefined)
+        a = '';
+    if (b === undefined)
+        b = '';
+    if (a === b)
+        return 0;
+    return a < b ? -1 : 1;
+}
+function byNumber(a, b) {
+    return a.number - b.number;
+}
+function byPR(a, b) {
+    if (a.number === b.number)
+        return 0;
+    if (a.pr_action != b.pr_action)
+        return _strCmp(a.pr_action, b.pr_action);
+    if (a.pr_state != b.pr_state)
+        return _strCmp(a.pr_state, b.pr_state);
+    return a.number - b.number;
+}
+function byMilestonPane(a, b) {
+    if (a.milestone.title == b.milestone.title)
+        return 0;
+    return a.milestone.title < b.milestone.title ? -1 : 1;
+}
 var GithubIssues = (function () {
     function GithubIssues() {
-        this.triageIssues = new Set(get_number);
-        this.prIssues = new Set(get_number);
-        this.repo = new Repository("angular", "angular");
-        this.milestones = new Set(get_number);
-        this.noMilestone = new Set(get_number);
+        this.triageIssues = new set_1.OrderedSet(byNumber);
+        this.prIssues = new set_1.OrderedSet(byPR);
+        this.repo = new github_1.Repository("angular", "angular");
+        this.milestones = new set_1.OrderedSet(byMilestonPane);
+        this.noMilestone = new set_1.OrderedSet(byNumber);
         this.repo.onNewIssue = this.onNewIssue.bind(this);
         this.repo.onNewPR = this.onNewPr.bind(this);
         this.loadIssues();
@@ -32,12 +59,7 @@ var GithubIssues = (function () {
             this.triageIssues.set(issue);
         }
         else if (issue.milestone) {
-            var milestonePane = this.milestones.getByKey(issue.milestone.number);
-            if (!milestonePane) {
-                milestonePane = new MilestonePane(issue.milestone);
-                this.milestones.set(milestonePane);
-            }
-            milestonePane.add(issue);
+            this.milestones.setIfAbsent(new MilestonePane(issue.milestone)).add(issue);
         }
         else {
             this.noMilestone.set(issue);
@@ -62,162 +84,34 @@ var GithubIssues = (function () {
     ], GithubIssues);
     return GithubIssues;
 })();
+function byAssigneePane(a, b) {
+    return _strCmp(a.asignee.login, b.asignee.login);
+}
 var MilestonePane = (function () {
     function MilestonePane(milestone) {
         this.milestone = milestone;
-        this.asignees = [];
+        this.asignees = new set_1.OrderedSet(byAssigneePane);
+        this.notAssignee = new set_1.OrderedSet(byNumber);
         this.number = milestone.number;
     }
-    MilestonePane.prototype.add = function (issue) { };
+    MilestonePane.prototype.add = function (issue) {
+        if (issue.asignee) {
+            this.asignees.setIfAbsent(new AsigneePane(issue.asignee)).add(issue);
+        }
+        else {
+            this.notAssignee.set(issue);
+        }
+    };
     return MilestonePane;
 })();
 var AsigneePane = (function () {
-    function AsigneePane() {
+    function AsigneePane(asignee) {
+        this.asignee = asignee;
+        this.issues = new set_1.OrderedSet(byNumber);
     }
+    AsigneePane.prototype.add = function (issue) {
+        this.issues.set(issue);
+    };
     return AsigneePane;
-})();
-var Set = (function () {
-    function Set(keyGetter) {
-        this.keyGetter = keyGetter;
-        this.keys = {};
-        this.items = [];
-    }
-    Set.prototype.getByKey = function (key) {
-        return this.keys[key];
-    };
-    Set.prototype.set = function (item) {
-        var key = this.keyGetter(item);
-        var oldItem = this.keys[key];
-        if (oldItem) {
-            var index = this.items.indexOf(oldItem);
-            this.items[index] = item;
-        }
-        else {
-            this.items.push(item);
-        }
-        this.keys[key] = item;
-        return item;
-    };
-    return Set;
-})();
-var Repository = (function () {
-    function Repository(username, repository) {
-        this.username = username;
-        this.repository = repository;
-        this.issues = {};
-        this.previousIssues = {};
-        this.prs = {};
-        this.previousPrs = {};
-        this.onNewIssue = function () { return null; };
-        this.onRemovedIssue = function () { return null; };
-        this.onNewPR = function () { return null; };
-        this.onRemovedPR = function () { return null; };
-        this.state = '';
-    }
-    Repository.prototype.clientId = function () {
-        return localStorage.getItem('github.client_id');
-    };
-    Repository.prototype.clientSecret = function () {
-        return localStorage.getItem('github.client_secret');
-    };
-    Repository.prototype.refresh = function () {
-        var _this = this;
-        this.state = 'refreshing';
-        this.previousIssues = this.issues;
-        this.previousPrs = this.prs;
-        var fetchPage = function (page) {
-            var http = new XMLHttpRequest();
-            var params = "client_id=" + _this.clientId() + "&client_secret=" + _this.clientSecret() + "&per_page=100&page=" + page;
-            var url = "https://api.github.com/repos/angular/angular/issues?" + params;
-            http.open("GET", url, true);
-            http.onreadystatechange = function () {
-                var response = http.responseText;
-                if (http.readyState == 4) {
-                    if (http.status == 200) {
-                        var issues = JSON.parse(response);
-                        issues.forEach(_this._processIssues.bind(_this));
-                        if (issues.length >= 100) {
-                            fetchPage(page + 1);
-                        }
-                        else {
-                            _this.state = '';
-                            _this._notifyRemoves();
-                        }
-                    }
-                    else {
-                        console.error(response);
-                    }
-                }
-            };
-            http.send(params);
-        };
-        fetchPage(0);
-    };
-    Repository.prototype._processIssues = function (issue) {
-        this._parseLabels(issue);
-        issue.needsTriage = function () {
-            if (this.pull_requst) {
-                return false;
-            }
-            else {
-                return !this.type || !this.priority || !this.comp || !this.effort;
-            }
-        };
-        if (issue.pull_request) {
-            this.issues[issue.number] = issue;
-            this.onNewPR(issue);
-        }
-        else {
-            this.prs[issue.number] = issue;
-            this.onNewIssue(issue);
-        }
-    };
-    Repository.prototype._notifyRemoves = function () {
-        for (var issueNo in this.previousIssues) {
-            if (!this.issues[issueNo]) {
-                this.onRemovedIssue(this.previousIssues[issueNo]);
-            }
-        }
-        for (var prNo in this.previousPrs) {
-            if (!this.prs[prNo]) {
-                this.onRemovedIssue(this.previousPrs[prNo]);
-            }
-        }
-    };
-    Repository.prototype._parseLabels = function (issue) {
-        var other = issue.labels_other = [];
-        issue.priority = '';
-        issue.type = '';
-        issue.component = '';
-        issue.labels.forEach(function (label) {
-            var split = label.name.split(':');
-            var name = split[0];
-            var value = split[1];
-            if (value) {
-                value = value.split('/')[0].trim();
-            }
-            switch (name) {
-                case 'P0':
-                case 'P1':
-                case 'P2':
-                case 'P3':
-                case 'P4':
-                    value = name;
-                    name = 'priority';
-                case 'comp':
-                case 'cla':
-                case 'pr_state':
-                case 'pr_action':
-                case 'cust':
-                case 'effort':
-                case 'type':
-                    issue[name] = (issue[name] ? issue[name] + '; ' : '') + value;
-                    break;
-                default:
-                    other.push(label.name);
-            }
-        });
-    };
-    return Repository;
 })();
 angular2_1.bootstrap(GithubIssues);
