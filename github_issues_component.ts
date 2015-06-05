@@ -99,20 +99,18 @@ function byMilestonGroup(a: MilestoneGroup, b:MilestoneGroup): number {
   </table>
     
   <h1>Backlog</h1>
-  <!--
   <table border=1 cellspacing=0>
     <tr>
-      <th *ng-for="var componentGroup of backlog.components.items">
-        <img width="15" height="15" [src]="assigneeGroup.assignee.avatar_url || ''">
-         <a href="https://github.com/angular/angular/issues/assigned/{{assigneeGroup.assignee.login}}" target="_blank">{{assigneeGroup.assignee.login}}</a></th>
+      <th *ng-for="var componentGroup of backlogComponents.items" valign="top">
+        <a target="_blank" href='https://github.com/angular/angular/issues?q=is%3Aopen+is%3Aissue+no%3Amilestone+label%3A%22comp%3A+{{componentGroup.name}}%22'>{{componentGroup.name}}</a>
+      </th>
     </tr>
     <tr>
-      <td *ng-for="var componentGroup of backlog.components.items" valign="top">
-        <issue *ng-for="var issue of assigneeGroup.issues.items" [issue]="issue" [compact]="true"></issue>
+      <td *ng-for="var componentGroup of backlogComponents.items" valign="top">
+        <issue *ng-for="var issue of componentGroup.issues.items" [issue]="issue" [compact]="true"></issue>
       </td>
     </tr>
   </table>    
-  -->  
   `
 })
 export class GithubIssues {
@@ -120,9 +118,10 @@ export class GithubIssues {
   prIssues = new OrderedSet<Issue>(byPR);
   repo = new Repository("angular", "angular");
   milestoneAssignees = new OrderedSet<Assignee>((a:Assignee, b:Assignee) =>
-    a.login == b.login ? 0 : (a.login < b.login ? -1 : 1));
+    a.login == b.login ? 0 : a.login < b.login ? -1 : 1);
   milestones = new OrderedSet<MilestoneGroup>(byMilestonGroup);
-  noMilestone = new OrderedSet<Issue>(byNumber);
+  backlogComponents = new OrderedSet<ComponentGroup>((a:ComponentGroup, b:ComponentGroup) =>
+    a.name == b.name ? 0 : a.name < b.name ? -1 : 1);
 
   
   constructor() {
@@ -142,7 +141,7 @@ export class GithubIssues {
       if (issue.assignee) this.milestoneAssignees.set(issue.assignee);
       this.milestones.setIfAbsent(new MilestoneGroup(issue.milestone)).add(issue);
     } else {
-      this.noMilestone.set(issue);
+      this.backlogComponents.setIfAbsent(new ComponentGroup(issue.comp)).add(issue);
     }
   }
   

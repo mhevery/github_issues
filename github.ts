@@ -99,7 +99,7 @@ export class Repository {
       var name = split[0];
       var value = split[1];
       if (value) {
-        value = value.split('/')[0].trim();
+        value = value.split(' / ')[0].trim();
       }
       switch (name) {
         case 'P0':
