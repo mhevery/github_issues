@@ -37,18 +37,41 @@ function byMilestonGroup(a: MilestoneGroup, b:MilestoneGroup): number {
   <button (click)="loadIssues()">Load Issues {{repo.state}}</button>
   Action: [ <a href (click)="setupAuthToken(); false">{{hasAuthToken() ? 'Using' : 'Needs'}} Github Auth Token</a> 
           (<a href="https://github.com/settings/developers" target="_blank">Get Token</a>) ]
+        
+  <h1>Milestone</h1>
+  <table border=1 cellspacing=0>
+    <tr>
+      <th><a href="https://github.com/angular/angular/issues?q=is%3Aopen+is%3Aissue+no%3Aassignee" target="_blank">!Assigned</a></th>
+      <th *ng-for="var assignee of milestoneAssignees.items">
+        <a href="https://github.com/angular/angular/issues/assigned/{{assignee.login}}" target="_blank">
+          <img width="60" height="60" [src]="assignee.avatar_url || ''" title="{{assignee.login}}">
+        </a>
+      </th>
+    </tr>
+    <tbody *ng-for="var milestoneGroup of milestones.items">
+      <tr><td [col-span]="milestoneAssignees.items.length + 1"><h2>{{milestoneGroup.milestone.title}}</h2></td></tr>
+      <tr>
+        <td valign="top">
+          <issue *ng-for="var issue of milestoneGroup.noAssignee.items" [issue]="issue"></issue>
+        </td>
+        <td *ng-for="var assignee of milestoneAssignees.items" valign="top">
+          <issue *ng-for="var issue of milestoneGroup.getIssues(assignee)" [issue]="issue" [compact]="true"></issue>
+        </td>
+      </tr>
+    </tbody>
+  <table>
   
   <h1>Triage</h1>
   <table border=1 cellspacing=0>
     <tr>
-      <th><h2>Issues {{triageIssues.items.length}}</h2></th>
-      <th><h2>PRs {{prIssues.items.length}}</h2></th>
+      <th><h2>Issues: {{triageIssues.items.length}}</h2></th>
+      <th><h2>PRs: {{prIssues.items.length}}</h2></th>
     </tr>
     <tr>
-      <td valign="top" width="50%">
+      <td valign="top" width="40%">
         <issue *ng-for="var issue of triageIssues.items" [issue]="issue"></issue>
       </td>
-      <td valign="top" width="50%">
+      <td valign="top" width="60%">
         <table>
             <tr>
               <th>PR#</th>
@@ -74,30 +97,7 @@ function byMilestonGroup(a: MilestoneGroup, b:MilestoneGroup): number {
       </td>
     </tr>
   </table>
-  
-      
-  <h1>Milestone</h1>
-  <div *ng-for="var milestoneGroup of milestones.items">
-    <h2><a target="_blank" [href]="milestoneGroup.milestone.html_url">
-        {{milestoneGroup.milestone.title}}</a></h2>
-    <table border=1 cellspacing=0>
-      <tr>
-        <th><a href="https://github.com/angular/angular/issues?q=is%3Aopen+is%3Aissue+no%3Aassignee" target="_blank">!Assigned</a></th>
-        <th *ng-for="var assigneeGroup of milestoneGroup.assignees.items">
-          <img width="15" height="15" [src]="assigneeGroup.assignee.avatar_url || ''">
-           <a href="https://github.com/angular/angular/issues/assigned/{{assigneeGroup.assignee.login}}" target="_blank">{{assigneeGroup.assignee.login}}</a></th>
-      </tr>
-      <tr>
-        <td valign="top">
-          <issue *ng-for="var issue of milestoneGroup.noAssignee.items" [issue]="issue"></issue>
-        </td>
-        <td *ng-for="var assigneeGroup of milestoneGroup.assignees.items" valign="top">
-          <issue *ng-for="var issue of assigneeGroup.issues.items" [issue]="issue" [compact]="true"></issue>
-        </td>
-      </tr>
-    </table>    
-  </div>
-  
+    
   <h1>Backlog</h1>
   <!--
   <table border=1 cellspacing=0>
@@ -119,6 +119,8 @@ export class GithubIssues {
   triageIssues = new OrderedSet<Issue>(byNumber);
   prIssues = new OrderedSet<Issue>(byPR);
   repo = new Repository("angular", "angular");
+  milestoneAssignees = new OrderedSet<Assignee>((a:Assignee, b:Assignee) =>
+    a.login == b.login ? 0 : (a.login < b.login ? -1 : 1));
   milestones = new OrderedSet<MilestoneGroup>(byMilestonGroup);
   noMilestone = new OrderedSet<Issue>(byNumber);
 
@@ -137,6 +139,7 @@ export class GithubIssues {
     if (issue.needsTriage()) {
       this.triageIssues.set(issue);
     } else if (issue.milestone) {
+      if (issue.assignee) this.milestoneAssignees.set(issue.assignee);
       this.milestones.setIfAbsent(new MilestoneGroup(issue.milestone)).add(issue);
     } else {
       this.noMilestone.set(issue);
@@ -171,12 +174,16 @@ class MilestoneGroup {
     this.number = milestone.number;
   }
   
-  add(issue:Issue) {
+  add(issue: Issue) {
     if (issue.assignee) {
       this.assignees.setIfAbsent(new AssigneeGroup(issue.assignee)).add(issue);
     } else {
       this.noAssignee.set(issue);
     }
+  }
+  
+  getIssues(assignee: Assignee) {
+    return this.assignees.setIfAbsent(new AssigneeGroup(assignee)).issues.items;   
   }
 }
 

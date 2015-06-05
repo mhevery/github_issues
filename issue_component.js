@@ -16,31 +16,31 @@ var IssueComponent = (function () {
     }
     IssueComponent.prototype.periorityIcon = function () {
         switch (this.issue.priority) {
-            case 'P0': return '0⃣';
-            case 'P1': return '1⃣';
-            case 'P2': return '2⃣';
-            case 'P3': return '3⃣';
-            case 'P4': return '4⃣';
-            case 'P5': return '5⃣';
+            case 'P0': return '0';
+            case 'P1': return '1';
+            case 'P2': return '2';
+            case 'P3': return '3';
+            case 'P4': return '4';
+            case 'P5': return '5';
             default: return IssueComponent.NOT_FOUND;
         }
     };
     IssueComponent.prototype.effortIcon = function () {
         switch (this.issue.effort) {
-            case 'easy': return '▏';
-            case 'medium': return '▌';
-            case 'tough': return '█';
+            case 'easy': return '.';
+            case 'medium': return 'o';
+            case 'tough': return 'O';
             default: return IssueComponent.NOT_FOUND;
         }
     };
     IssueComponent.prototype.typeIcon = function () {
         switch (this.issue.type) {
-            case 'RFC': return '❔';
-            case 'bug': return '🐛';
-            case 'feature': return '➕';
-            case 'perf': return '📊';
-            case 'refactor': return '❤';
-            case 'chore': return '🔧';
+            case 'RFC': return 'Q';
+            case 'bug': return 'B';
+            case 'feature': return 'F';
+            case 'performance': return 'P';
+            case 'refactor': return 'R';
+            case 'chore': return 'C';
             default: return IssueComponent.NOT_FOUND;
         }
     };
@@ -51,7 +51,7 @@ var IssueComponent = (function () {
             properties: { 'issue': 'issue', 'compact': 'compact' }
         }),
         angular2_1.View({
-            template: "\n  <div>\n    <span title=\"{{issue.priority}}\">{{periorityIcon()}}</span><span title=\"{{issue.type}}\">{{typeIcon()}}</span><span title=\"{{issue.effort}}\">{{effortIcon()}}</span><a target=\"_blank\" title=\"{{issue.title}}\" [href]=\"issue.html_url\">{{issue.number}}</a>\n    <span [hidden]=\"compact\">\n      <a target=\"_blank\" [href]=\"issue.html_url\">{{issue.title}}</a>\n      [ {{issue.comp}} ]\n    </span>\n  </div>\n  "
+            template: "\n  <div>\n    <span title=\"{{issue.priority}}\" style=\"width: .6em; display: inline-block\">{{periorityIcon()}}</span\n    ><span title=\"{{issue.type}}\" style=\"width: .7em; display: inline-block\">{{typeIcon()}}</span\n    ><span title=\"{{issue.effort}}\" style=\"width: 1em; display: inline-block\">{{effortIcon()}}</span\n    ><a target=\"_blank\" title=\"[{{issue.comp}}] {{issue.title}}\" [href]=\"issue.html_url\">{{issue.number}}</a>\n    <span [hidden]=\"compact\">\n      <a target=\"_blank\" [href]=\"issue.html_url\">{{issue.title}}</a>\n      [ {{issue.comp}} ]\n    </span>\n  </div>\n  "
         }), 
         __metadata('design:paramtypes', [])
     ], IssueComponent);
