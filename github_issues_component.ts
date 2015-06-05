@@ -60,6 +60,20 @@ function byMilestonGroup(a: MilestoneGroup, b:MilestoneGroup): number {
       </tr>
     </tbody>
   <table>
+      
+  <h1>Backlog</h1>
+  <table border=1 cellspacing=0>
+    <tr>
+      <th *ng-for="var componentGroup of backlogComponents.items" valign="top">
+        <a target="_blank" href='https://github.com/angular/angular/issues?q=is%3Aopen+is%3Aissue+no%3Amilestone+label%3A%22comp%3A+{{componentGroup.name}}%22'>{{componentGroup.name}}</a>
+      </th>
+    </tr>
+    <tr>
+      <td *ng-for="var componentGroup of backlogComponents.items" valign="top">
+        <issue *ng-for="var issue of componentGroup.issues.items" [issue]="issue" [compact]="true"></issue>
+      </td>
+    </tr>
+  </table>    
   
   <h1>Triage</h1>
   <table border=1 cellspacing=0>
@@ -96,21 +110,7 @@ function byMilestonGroup(a: MilestoneGroup, b:MilestoneGroup): number {
           </table>
       </td>
     </tr>
-  </table>
-    
-  <h1>Backlog</h1>
-  <table border=1 cellspacing=0>
-    <tr>
-      <th *ng-for="var componentGroup of backlogComponents.items" valign="top">
-        <a target="_blank" href='https://github.com/angular/angular/issues?q=is%3Aopen+is%3Aissue+no%3Amilestone+label%3A%22comp%3A+{{componentGroup.name}}%22'>{{componentGroup.name}}</a>
-      </th>
-    </tr>
-    <tr>
-      <td *ng-for="var componentGroup of backlogComponents.items" valign="top">
-        <issue *ng-for="var issue of componentGroup.issues.items" [issue]="issue" [compact]="true"></issue>
-      </td>
-    </tr>
-  </table>    
+  </table>  
   `
 })
 export class GithubIssues {
