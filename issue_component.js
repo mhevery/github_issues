@@ -26,10 +26,13 @@ var IssueComponent = (function () {
         }
     };
     IssueComponent.prototype.effortIcon = function () {
-        switch (this.issue.effort) {
-            case 'easy': return '.';
-            case 'medium': return 'o';
-            case 'tough': return 'O';
+        var effort = this.issue.effort;
+        if (effort)
+            effort = effort.split(':')[0];
+        switch (effort) {
+            case '1': return '.';
+            case '2': return 'o';
+            case '3': return 'O';
             default: return IssueComponent.NOT_FOUND;
         }
     };

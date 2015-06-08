@@ -88,26 +88,28 @@ var Repository = (function () {
         issue.type = '';
         issue.component = '';
         issue.labels.forEach(function (label) {
-            var split = label.name.split(':');
-            var name = split[0];
-            var value = split[1];
+            var match = /^([A-Za-z]+)(\d*):\s*(.*)$/.exec(label.name);
+            var name = match && match[1] || '';
+            var level = match && match[2] || 0;
+            var value = match && match[3] || '';
             if (value) {
                 value = value.split(' / ')[0].trim();
             }
+            if (name == 'P') {
+                name = 'priority';
+                value = 'P' + level;
+            }
+            if (name == 'effort') {
+                value = level + ': ' + value;
+            }
             switch (name) {
-                case 'P0':
-                case 'P1':
-                case 'P2':
-                case 'P3':
-                case 'P4':
-                    value = name;
-                    name = 'priority';
+                case 'priority':
+                case 'effort':
                 case 'comp':
                 case 'cla':
                 case 'pr_state':
                 case 'pr_action':
                 case 'cust':
-                case 'effort':
                 case 'type':
                     issue[name] = (issue[name] ? issue[name] + '; ' : '') + value;
                     break;
