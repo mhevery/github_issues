@@ -11,6 +11,10 @@ function _strCmp(a: string, b: string) {
   return a < b ? -1 : 1;
 }
 
+function milestoneName(i: Issue) {
+  return i.milestone ? i.milestone.title : '~';
+}
+
 function byNumber(a: Issue, b:Issue): number {
   return a.number - b.number;
 }
@@ -47,7 +51,7 @@ function byName(a:any, b:any) {
     <tr>
       <th><a href="https://github.com/angular/angular/issues?q=is%3Aopen+is%3Aissue+no%3Aassignee" target="_blank">!Assigned</a></th>
       <th *ng-for="var assignee of milestoneAssignees.items">
-        <a href="https://github.com/angular/angular/issues/assigned/{{assignee.login}}" target="_blank">
+        <a href="https://github.com/angular/angular/issues?q=is%3Aopen+assignee%3A{{assignee.login}}" target="_blank">
           <img width="60" height="60" [src]="assignee.avatar_url || ''" title="{{assignee.login}}">
         </a>
       </th>
@@ -211,6 +215,7 @@ class MilestoneGroup {
 
 function byPriority(a: Issue, b:Issue): number {
   if (a.number === b.number) return 0;
+  if (milestoneName(a) != milestoneName(b)) return _strCmp(milestoneName(a), milestoneName(b));
   if (a.priority != b.priority) return _strCmp(a.priority, b.priority);
   if (a.effort != b.effort) return _strCmp(a.effort, b.effort);
   return a.number - b.number;
