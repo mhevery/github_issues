@@ -47,6 +47,15 @@ var IssueComponent = (function () {
             default: return IssueComponent.NOT_FOUND;
         }
     };
+    IssueComponent.prototype.actionIcon = function () {
+        switch (this.issue.action || '') {
+            case '': return '';
+            case 'Design': return '?';
+            case 'PR': return '*';
+            case 'Blocked': return '!';
+            default: return IssueComponent.NOT_FOUND;
+        }
+    };
     IssueComponent.NOT_FOUND = '⁉';
     IssueComponent = __decorate([
         angular2_1.Component({
@@ -54,7 +63,7 @@ var IssueComponent = (function () {
             properties: { 'issue': 'issue', 'compact': 'compact' }
         }),
         angular2_1.View({
-            template: "\n  <div>\n    <span title=\"{{issue.priority}}\" style=\"width: .6em; display: inline-block\">{{periorityIcon()}}</span\n    ><span title=\"{{issue.type}}\" style=\"width: .7em; display: inline-block\">{{typeIcon()}}</span\n    ><span title=\"{{issue.effort}}\" style=\"width: 1em; display: inline-block\">{{effortIcon()}}</span\n    ><a target=\"_blank\" title=\"[{{issue.comp}}] {{issue.title}}\" [href]=\"issue.html_url\">{{issue.number}}</a>\n    <span [hidden]=\"compact\">\n      <a target=\"_blank\" [href]=\"issue.html_url\">{{issue.title}}</a>\n      [ {{issue.comp}} ]\n    </span>\n  </div>\n  "
+            template: "\n  <div>\n    <span title=\"{{issue.priority}}\" style=\"width: .6em; display: inline-block\">{{periorityIcon()}}</span\n    ><span title=\"{{issue.type}}\" style=\"width: .7em; display: inline-block\">{{typeIcon()}}</span\n    ><span title=\"{{issue.effort}}\" style=\"width: 1em; display: inline-block\">{{effortIcon()}}</span\n    ><a target=\"_blank\" title=\"[{{issue.comp}}] {{issue.title}}\" [href]=\"issue.html_url\">{{issue.number}}</a\n    ><span title=\"{{issue.action}}\">{{actionIcon()}}</span>\n    <span [hidden]=\"compact\">\n      <a target=\"_blank\" [href]=\"issue.html_url\">{{issue.title}}</a>\n      [ {{issue.comp}} ]\n    </span>\n  </div>\n  "
         }), 
         __metadata('design:paramtypes', [])
     ], IssueComponent);

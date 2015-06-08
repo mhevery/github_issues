@@ -21,6 +21,8 @@ interface Issue {
   pr_action: string;
   cust: string;
   labels_other: Array<string>;
+  hotlist: string;
+  action: string;
   
   parseLabels(): void;
   needsTriage(): boolean;

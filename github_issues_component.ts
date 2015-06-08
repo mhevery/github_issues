@@ -27,6 +27,10 @@ function byMilestonGroup(a: MilestoneGroup, b:MilestoneGroup): number {
   return a.milestone.title < b.milestone.title ? -1 : 1; 
 }
 
+function byName(a:any, b:any) {
+  return a.name == b.name ? 0 : a.name < b.name ? -1 : 1;
+}
+
 @Component({
 	selector: 'github-issues'
 })
@@ -60,6 +64,20 @@ function byMilestonGroup(a: MilestoneGroup, b:MilestoneGroup): number {
       </tr>
     </tbody>
   <table>
+
+  <h1>Hotlist</h1>
+  <table border=1 cellspacing=0>
+    <tr>
+      <th *ng-for="var hotlistGroup of hotlistIssues.items" valign="top">
+        <a target="_blank" href='https://github.com/angular/angular/issues?q=is%3Aopen+is%3Aissue+no%3Amilestone+label%3A%22comp%3A+{{hotlistGroup.name}}%22'>{{hotlistGroup.name}}</a>
+      </th>
+    </tr>
+    <tr>
+      <td *ng-for="var hotlistGroup of hotlistIssues.items" valign="top">
+        <issue *ng-for="var issue of hotlistGroup.issues.items" [issue]="issue" [compact]="false"></issue>
+      </td>
+    </tr>
+  </table>    
       
   <h1>Backlog</h1>
   <table border=1 cellspacing=0>
@@ -120,8 +138,8 @@ export class GithubIssues {
   milestoneAssignees = new OrderedSet<Assignee>((a:Assignee, b:Assignee) =>
     a.login == b.login ? 0 : a.login < b.login ? -1 : 1);
   milestones = new OrderedSet<MilestoneGroup>(byMilestonGroup);
-  backlogComponents = new OrderedSet<ComponentGroup>((a:ComponentGroup, b:ComponentGroup) =>
-    a.name == b.name ? 0 : a.name < b.name ? -1 : 1);
+  backlogComponents = new OrderedSet<ComponentGroup>(byName;
+  hotlistIssues = new OrderedSet<HotlistGroup>(byName);
 
   
   constructor() {
@@ -142,6 +160,11 @@ export class GithubIssues {
       this.milestones.setIfAbsent(new MilestoneGroup(issue.milestone)).add(issue);
     } else {
       this.backlogComponents.setIfAbsent(new ComponentGroup(issue.comp)).add(issue);
+    }
+    if (issue.hotlist) {
+      issue.hotlist.split(';').forEach((name) => {
+        this.hotlistIssues.setIfAbsent(new HotlistGroup(name.trim())).add(issue);      
+      })
     }
   }
   
@@ -204,6 +227,16 @@ class AssigneeGroup {
 }
 
 class ComponentGroup {
+  issues = new OrderedSet<Issue>(byPriority);
+  
+  constructor(public name:string) { }
+  
+  add(issue:Issue) {
+    this.issues.set(issue);
+  }  
+}
+
+class HotlistGroup {
   issues = new OrderedSet<Issue>(byPriority);
   
   constructor(public name:string) { }

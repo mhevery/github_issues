@@ -110,6 +110,8 @@ var Repository = (function () {
                 case 'pr_state':
                 case 'pr_action':
                 case 'cust':
+                case 'hotlist':
+                case 'action':
                 case 'type':
                     issue[name] = (issue[name] ? issue[name] + '; ' : '') + value;
                     break;
