@@ -69,7 +69,7 @@ function byName(a:any, b:any) {
   <table border=1 cellspacing=0>
     <tr>
       <th *ng-for="var hotlistGroup of hotlistIssues.items" valign="top">
-        <a target="_blank" href='https://github.com/angular/angular/issues?q=is%3Aopen+is%3Aissue+no%3Amilestone+label%3A%22comp%3A+{{hotlistGroup.name}}%22'>{{hotlistGroup.name}}</a>
+        <a target="_blank" href='https://github.com/angular/angular/issues?q=is%3Aopen+is%3Aissue+label%3A%22hotlist%3A+{{hotlistGroup.name}}%22'>{{hotlistGroup.name}}</a>
       </th>
     </tr>
     <tr>
