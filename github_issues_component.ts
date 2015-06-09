@@ -60,7 +60,7 @@ function byName(a:any, b:any) {
       <tr><td [col-span]="milestoneAssignees.items.length + 1"><h2>{{milestoneGroup.milestone.title}}</h2></td></tr>
       <tr>
         <td valign="top">
-          <issue *ng-for="var issue of milestoneGroup.noAssignee.items" [issue]="issue"></issue>
+          <issue *ng-for="var issue of milestoneGroup.noAssignee.items" [issue]="issue" [compact]="true"></issue>
         </td>
         <td *ng-for="var assignee of milestoneAssignees.items" valign="top">
           <issue *ng-for="var issue of milestoneGroup.getIssues(assignee)" [issue]="issue" [compact]="true"></issue>
