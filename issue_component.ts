@@ -2,7 +2,7 @@ import {Component, View} from 'angular2/angular2';
 
 @Component({
   selector: 'issue',
-  properties: {'issue': 'issue', 'compact': 'compact'}
+  properties: ['issue', 'compact']
 })
 @View({
   template: `
@@ -15,7 +15,7 @@ import {Component, View} from 'angular2/angular2';
     <span [hidden]="compact">
       <a target="_blank" [href]="issue.html_url">{{issue.title}}</a>
       <span [hidden]="!issue.comp">[<a href="https://github.com/angular/angular/issues?q=is%3Aopen+is%3Aissue+no%3Amilestone+label%3A%22comp%3A+{{issue.comp}}" target="_blank">{{issue.comp}}</a>]</span>
-      <span [hidden]="!issue.milestone">&lt;<a href="https://github.com/angular/angular/milestones/{{(issue.milestone||{}).title}}" target="_blank">{{(issue.milestone||{}).title}}</a>&gt;</span>
+      <span [hidden]="!issue.milestone">&lt;<a href="https://github.com/angular/angular/milestones/{{issue.milestone?.title" target="_blank">{{issue.milestone?.title}}</a>&gt;</span>
     </span>
   </div>
   `

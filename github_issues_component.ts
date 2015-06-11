@@ -127,7 +127,7 @@ function byName(a:any, b:any) {
               <td nowrap>{{issue.priority}}</td>
               <td nowrap>{{issue.cust}}</td>
               <td>{{issue.labels_other.join('; ')}}</td>
-              <td><a href="{{}}" target="_blank"><img width="15" height="15" [hidden]="!issue.assignee" [src]="(issue.assignee||{}).avatar_url || ''"> {{(issue.assignee||{}).login}}</a></td>
+              <td><a href="{{}}" target="_blank"><img width="15" height="15" [hidden]="!issue.assignee" [src]="issue.assignee?.avatar_url || ''"> {{issue.assignee?.login}}</a></td>
             </tr>
           </table>
       </td>
