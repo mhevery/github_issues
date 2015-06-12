@@ -109,6 +109,9 @@ export class Repository {
       if (name == 'effort') {
         value = level + ': ' + value; 
       }
+      if (name == 'state') {
+        name = 'issue_state'; 
+      }
       switch (name) {
         case 'priority':
         case 'effort':
@@ -118,7 +121,7 @@ export class Repository {
         case 'pr_action':
         case 'cust':
         case 'hotlist':
-        case 'action':
+        case 'issue_state':
         case 'type':
           issue[name] = (issue[name] ? issue[name] + '; ' : '') + value;
           break;

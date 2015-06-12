@@ -11,7 +11,7 @@ import {Component, View} from 'angular2/angular2';
     ><span title="{{issue.type}}" style="width: .7em; display: inline-block">{{typeIcon()}}</span
     ><span title="{{issue.effort}}" style="width: 1em; display: inline-block">{{effortIcon()}}</span
     ><a target="_blank" title="[{{issue.comp}}] {{issue.title}}" [href]="issue.html_url">{{issue.number}}</a
-    ><span title="{{issue.action}}">{{actionIcon()}}</span>
+    ><span title="{{issue.action}}">{{stateIcon()}}</span>
     <span [hidden]="compact">
       <a target="_blank" [href]="issue.html_url">{{issue.title}}</a>
       <span [hidden]="!issue.comp">[<a href="https://github.com/angular/angular/issues?q=is%3Aopen+is%3Aissue+no%3Amilestone+label%3A%22comp%3A+{{issue.comp}}" target="_blank">{{issue.comp}}</a>]</span>
@@ -61,10 +61,10 @@ export class IssueComponent {
     }
   }
 
-  actionIcon() {
-    switch (this.issue.action || '') {
+  stateIcon() {
+    switch (this.issue.issue_state || '') {
       case '': return '';
-      case 'Design': return '?';
+      case 'Needs Design': return '?';
       case 'PR': return '*';
       case 'Blocked': return '!';
       default: return IssueComponent.NOT_FOUND;

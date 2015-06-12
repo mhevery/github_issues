@@ -22,7 +22,7 @@ interface Issue {
   cust: string;
   labels_other: Array<string>;
   hotlist: string;
-  action: string;
+  issue_state: string;
   
   parseLabels(): void;
   needsTriage(): boolean;

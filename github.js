@@ -102,6 +102,9 @@ var Repository = (function () {
             if (name == 'effort') {
                 value = level + ': ' + value;
             }
+            if (name == 'state') {
+                name = 'issue_state';
+            }
             switch (name) {
                 case 'priority':
                 case 'effort':
@@ -111,7 +114,7 @@ var Repository = (function () {
                 case 'pr_action':
                 case 'cust':
                 case 'hotlist':
-                case 'action':
+                case 'issue_state':
                 case 'type':
                     issue[name] = (issue[name] ? issue[name] + '; ' : '') + value;
                     break;
