@@ -3,6 +3,7 @@ import {Component, View, NgFor} from 'angular2/angular2';
 import {Repository} from 'github';
 import {OrderedSet} from 'set';
 import {IssueComponent} from 'issue_component';
+import {MentionComponent} from 'mentions_component';
 
 function _strCmp(a: string, b: string) {
   if (a === undefined) a = '';
@@ -28,7 +29,7 @@ function byPR(a: Issue, b:Issue): number {
 
 function byMilestonGroup(a: MilestoneGroup, b:MilestoneGroup): number {
   if (a.milestone.title == b.milestone.title) return 0;
-  return a.milestone.title < b.milestone.title ? -1 : 1; 
+  return a.milestone.title < b.milestone.title ? -1 : 1;
 }
 
 function byName(a:any, b:any) {
@@ -39,13 +40,16 @@ function byName(a:any, b:any) {
 	selector: 'github-issues'
 })
 @View({
-  directives: [NgFor, IssueComponent],
+  directives: [NgFor, IssueComponent, MentionComponent],
   template: `
   <h1>GitHub</h1>
   <button (click)="loadIssues()">Load Issues {{repo.state}}</button>
-  Action: [ <a href (click)="setupAuthToken(); false">{{hasAuthToken() ? 'Using' : 'Needs'}} Github Auth Token</a> 
+  Action: [ <a href (click)="setupAuthToken(); false">{{hasAuthToken() ? 'Using' : 'Needs'}} Github Auth Token</a>
           (<a href="https://github.com/settings/developers" target="_blank">Get Token</a>) ]
-        
+
+  <h1>Mentions</h1>
+    <gh-mentions org="angular" [days]="7"></gh-mentions>
+
   <h1>Milestone</h1>
   <table border=1 cellspacing=0>
     <tr>
@@ -81,8 +85,8 @@ function byName(a:any, b:any) {
         <issue *ng-for="var issue of hotlistGroup.issues.items" [issue]="issue" [compact]="false"></issue>
       </td>
     </tr>
-  </table>    
-      
+  </table>
+
   <h1>Backlog</h1>
   <table border=1 cellspacing=0>
     <tr>
@@ -95,8 +99,8 @@ function byName(a:any, b:any) {
         <issue *ng-for="var issue of componentGroup.issues.items" [issue]="issue" [compact]="true"></issue>
       </td>
     </tr>
-  </table>    
-  
+  </table>
+
   <h1>Triage</h1>
   <table border=1 cellspacing=0>
     <tr>
@@ -132,7 +136,7 @@ function byName(a:any, b:any) {
           </table>
       </td>
     </tr>
-  </table>  
+  </table>
   `
 })
 export class GithubIssues {
@@ -142,20 +146,20 @@ export class GithubIssues {
   milestoneAssignees = new OrderedSet<Assignee>((a:Assignee, b:Assignee) =>
     a.login == b.login ? 0 : a.login < b.login ? -1 : 1);
   milestones = new OrderedSet<MilestoneGroup>(byMilestonGroup);
-  backlogComponents = new OrderedSet<ComponentGroup>(byName;
+  backlogComponents = new OrderedSet<ComponentGroup>(byName);
   hotlistIssues = new OrderedSet<HotlistGroup>(byName);
 
-  
+
   constructor() {
     this.repo.onNewIssue = this.onNewIssue.bind(this);
     this.repo.onNewPR = this.onNewPr.bind(this);
     this.loadIssues();
   }
-  
+
   loadIssues() {
     this.repo.refresh();
-  }  
-  
+  }
+
   onNewIssue(issue: Issue) {
     if (issue.needsTriage()) {
       this.triageIssues.set(issue);
@@ -167,22 +171,22 @@ export class GithubIssues {
     }
     if (issue.hotlist) {
       issue.hotlist.split(';').forEach((name) => {
-        this.hotlistIssues.setIfAbsent(new HotlistGroup(name.trim())).add(issue);      
+        this.hotlistIssues.setIfAbsent(new HotlistGroup(name.trim())).add(issue);
       })
     }
   }
-  
+
   onNewPr(issue: Issue) {
     this.prIssues.set(issue);
   }
-    
+
   setupAuthToken() {
     localStorage.setItem('github.client_id', prompt("Github 'client_id':"));
     localStorage.setItem('github.client_secret', prompt("Github 'client_sceret':"));
   }
-  
-  hasAuthToken() { 
-    return localStorage.getItem('github.client_id') 
+
+  hasAuthToken() {
+    return localStorage.getItem('github.client_id')
         && localStorage.getItem('github.client_secret');
   }
 }
@@ -195,11 +199,11 @@ class MilestoneGroup {
   number: number;
   assignees = new OrderedSet<AssigneeGroup>(byAssigneeGroup);
   noAssignee = new OrderedSet<Issue>(byNumber);
-  
+
   constructor(public milestone: Milestone) {
     this.number = milestone.number;
   }
-  
+
   add(issue: Issue) {
     if (issue.assignee) {
       this.assignees.setIfAbsent(new AssigneeGroup(issue.assignee)).add(issue);
@@ -207,9 +211,9 @@ class MilestoneGroup {
       this.noAssignee.set(issue);
     }
   }
-  
+
   getIssues(assignee: Assignee) {
-    return this.assignees.setIfAbsent(new AssigneeGroup(assignee)).issues.items;   
+    return this.assignees.setIfAbsent(new AssigneeGroup(assignee)).issues.items;
   }
 }
 
@@ -225,7 +229,7 @@ function byPriority(a: Issue, b:Issue): number {
 class AssigneeGroup {
   issues = new OrderedSet<Issue>(byPriority);
   constructor(public assignee:Assignee) { }
-  
+
   add(issue: Issue) {
     this.issues.set(issue);
   }
@@ -233,20 +237,20 @@ class AssigneeGroup {
 
 class ComponentGroup {
   issues = new OrderedSet<Issue>(byPriority);
-  
+
   constructor(public name:string) { }
-  
+
   add(issue:Issue) {
     this.issues.set(issue);
-  }  
+  }
 }
 
 class HotlistGroup {
   issues = new OrderedSet<Issue>(byPriority);
-  
+
   constructor(public name:string) { }
-  
+
   add(issue:Issue) {
     this.issues.set(issue);
-  }  
+  }
 }
