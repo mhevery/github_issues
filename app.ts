@@ -1,6 +1,12 @@
 /// <reference path="typings/angular2/angular2.d.ts" />
 
-import {bootstrap} from 'angular2/angular2';
+import {bootstrap, bind} from 'angular2/angular2';
 import {GithubIssues} from 'github_issues_component';
+import {Mentions} from 'github';
+import {CoreTeam} from 'core_team';
 
-bootstrap(GithubIssues);
+bootstrap(GithubIssues, [
+    bind(Mentions).toClass(Mentions),
+    bind(CoreTeam).toClass(CoreTeam)
+]);
+

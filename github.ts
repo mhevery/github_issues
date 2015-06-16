@@ -1,39 +1,34 @@
 export class Repository {
   state: string;
-  
+
   issues:  { [s: string]: Issue; } = {};
   previousIssues:  { [s: string]: Issue; } = {};
   prs:  { [s: string]: Issue; } = {};
   previousPrs:  { [s: string]: Issue; } = {};
-  
+
   onNewIssue: (issue: Issue) => void = () => null;
   onRemovedIssue: (issue: Issue) => void = () => null;
   onNewPR: (issue: Issue) => void = () => null;
   onRemovedPR: (issue: Issue) => void = () => null;
-  
+
   constructor(public username: string, public repository: string) {
     this.state = '';
   }
-  
-  clientId() {
-    return localStorage.getItem('github.client_id');
-  }
-  
-  clientSecret() {
-    return localStorage.getItem('github.client_secret');
-  }
-  
+
   refresh() {
     this.state = 'refreshing';
     this.previousIssues = this.issues;
     this.previousPrs = this.prs;
-    
+
     var fetchPage = (page: number) => {
       var http = new XMLHttpRequest();
-      var params = `client_id=${this.clientId()}&client_secret=${this.clientSecret()}&per_page=100&page=${page}`;
-      var url = `https://api.github.com/repos/angular/angular/issues?${params}`;
+
+      var url = buildUrl('/repos/angular/angular/issues', {
+        per_page: 100,
+        page: page
+      });
       http.open("GET", url, true);
-      
+
       http.onreadystatechange = () => {
         var response = http.responseText;
         if (http.readyState == 4) {
@@ -51,11 +46,11 @@ export class Repository {
           }
         }
       }
-      http.send(params);
+      http.send();
     }
     fetchPage(0);
   }
-  
+
   _processIssues(issue: Issue) {
     this._parseLabels(issue);
     issue.needsTriage = function() {
@@ -92,8 +87,8 @@ export class Repository {
     var other = issue.labels_other = [];
     issue.priority = '';
     issue.type = '';
-    issue.component = '';
-    
+    //issue.component = '';
+
     issue.labels.forEach((label: Label) => {
       var match = /^([A-Za-z]+)(\d*):\s*(.*)$/.exec(label.name);
       var name = match && match[1] || '';
@@ -107,10 +102,10 @@ export class Repository {
         value = 'P' + level;
       }
       if (name == 'effort') {
-        value = level + ': ' + value; 
+        value = level + ': ' + value;
       }
       if (name == 'state') {
-        name = 'issue_state'; 
+        name = 'issue_state';
       }
       switch (name) {
         case 'priority':
@@ -128,6 +123,67 @@ export class Repository {
         default:
           other.push(label.name);
       }
-    }); 
+    });
   }
+}
+
+export class Mentions {
+  list: {title: string, url: string, number: number}[] = [];
+
+  refresh(username: string, org: string, days: any, from: string[]) {
+    this.list = [];
+
+    var xhr = new XMLHttpRequest();
+
+    var url = buildUrl('/search/issues', {
+      q: this._buildQuery(username, org, days, from)
+    });
+
+    xhr.onload = () => {
+      var status = xhr.status;
+      if (200 <= status && status <= 300) {
+        var mentions = JSON.parse(xhr.responseText);
+        mentions.items.forEach(mention => {
+          this.list.push({
+            number: mention.number,
+            title: mention.title,
+            url: mention.html_url
+          });
+        });
+      } else {
+        console.error(xhr.responseText);
+      }
+    }
+
+    xhr.open("GET", url);
+    xhr.send();
+  }
+
+  _buildQuery(username: string, org: string, days: any, from: string[]) {
+    let date: Date = new Date(Date.now() - days * 24 * 3600 * 1000);
+
+    let query = `mentions:${username}+user:${org}+created:>=${date.toISOString().substring(0, 10)}`;
+
+    if (from && from.length) {
+      from.forEach(u => {
+        query += `+involves:${u}`;
+      })
+    }
+
+    return query;
+  }
+}
+
+function buildUrl(ep: string, params: any): string {
+  params.client_id = localStorage.getItem('github.client_id');
+  params.client_secret = localStorage.getItem('github.client_secret');
+
+  var strParams = [];
+  for (let p in params) {
+    strParams.push(`${p}=${params[p]}`);
+  }
+
+  if (ep[0] == '/') ep = ep.substring(1);
+
+  return `https://api.github.com/${ep}?${strParams.join('&')}`;
 }

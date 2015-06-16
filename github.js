@@ -12,12 +12,6 @@ var Repository = (function () {
         this.onRemovedPR = function () { return null; };
         this.state = '';
     }
-    Repository.prototype.clientId = function () {
-        return localStorage.getItem('github.client_id');
-    };
-    Repository.prototype.clientSecret = function () {
-        return localStorage.getItem('github.client_secret');
-    };
     Repository.prototype.refresh = function () {
         var _this = this;
         this.state = 'refreshing';
@@ -25,8 +19,10 @@ var Repository = (function () {
         this.previousPrs = this.prs;
         var fetchPage = function (page) {
             var http = new XMLHttpRequest();
-            var params = "client_id=" + _this.clientId() + "&client_secret=" + _this.clientSecret() + "&per_page=100&page=" + page;
-            var url = "https://api.github.com/repos/angular/angular/issues?" + params;
+            var url = buildUrl('/repos/angular/angular/issues', {
+                per_page: 100,
+                page: page
+            });
             http.open("GET", url, true);
             http.onreadystatechange = function () {
                 var response = http.responseText;
@@ -47,7 +43,7 @@ var Repository = (function () {
                     }
                 }
             };
-            http.send(params);
+            http.send();
         };
         fetchPage(0);
     };
@@ -86,7 +82,7 @@ var Repository = (function () {
         var other = issue.labels_other = [];
         issue.priority = '';
         issue.type = '';
-        issue.component = '';
+        //issue.component = '';
         issue.labels.forEach(function (label) {
             var match = /^([A-Za-z]+)(\d*):\s*(.*)$/.exec(label.name);
             var name = match && match[1] || '';
@@ -126,4 +122,58 @@ var Repository = (function () {
     return Repository;
 })();
 exports.Repository = Repository;
+var Mentions = (function () {
+    function Mentions() {
+        this.list = [];
+    }
+    Mentions.prototype.refresh = function (username, org, days, from) {
+        var _this = this;
+        this.list = [];
+        var xhr = new XMLHttpRequest();
+        var url = buildUrl('/search/issues', {
+            q: this._buildQuery(username, org, days, from)
+        });
+        xhr.onload = function () {
+            var status = xhr.status;
+            if (200 <= status && status <= 300) {
+                var mentions = JSON.parse(xhr.responseText);
+                mentions.items.forEach(function (mention) {
+                    _this.list.push({
+                        number: mention.number,
+                        title: mention.title,
+                        url: mention.html_url
+                    });
+                });
+            }
+            else {
+                console.error(xhr.responseText);
+            }
+        };
+        xhr.open("GET", url);
+        xhr.send();
+    };
+    Mentions.prototype._buildQuery = function (username, org, days, from) {
+        var date = new Date(Date.now() - days * 24 * 3600 * 1000);
+        var query = "mentions:" + username + "+user:" + org + "+created:>=" + date.toISOString().substring(0, 10);
+        if (from && from.length) {
+            from.forEach(function (u) {
+                query += "+involves:" + u;
+            });
+        }
+        return query;
+    };
+    return Mentions;
+})();
+exports.Mentions = Mentions;
+function buildUrl(ep, params) {
+    params.client_id = localStorage.getItem('github.client_id');
+    params.client_secret = localStorage.getItem('github.client_secret');
+    var strParams = [];
+    for (var p in params) {
+        strParams.push(p + "=" + params[p]);
+    }
+    if (ep[0] == '/')
+        ep = ep.substring(1);
+    return "https://api.github.com/" + ep + "?" + strParams.join('&');
+}
 //# sourceMappingURL=github.js.map
