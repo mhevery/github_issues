@@ -50,7 +50,7 @@ var Repository = (function () {
     Repository.prototype._processIssues = function (issue) {
         this._parseLabels(issue);
         issue.needsTriage = function () {
-            if (this.pull_requst) {
+            if (this.pull_request) {
                 return false;
             }
             else {
