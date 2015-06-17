@@ -54,7 +54,7 @@ export class Repository {
   _processIssues(issue: Issue) {
     this._parseLabels(issue);
     issue.needsTriage = function() {
-      if (this.pull_requst) {
+      if (this.pull_request) {
         return false;
       } else {
         return !this.type || !this.priority || !this.comp || !this.effort;
