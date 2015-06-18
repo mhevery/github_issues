@@ -9,6 +9,11 @@
   </head>
   <body>
     <github-issues>Loading...</github-issues>
-    <script>System.import('app');</script>
   </body>
+  <script>
+    System.config({
+      baseURL: '/build'
+    });
+    System.import('app');
+  </script>
 </html>
