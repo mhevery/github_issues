@@ -1,3 +1,5 @@
+declare var Firebase;
+
 import {Component, View, NgFor, NgIf} from 'angular2/angular2';
 import {Mentions} from './github';
 import {CoreTeam} from 'core_team';
@@ -33,12 +35,15 @@ export class MentionComponent {
   constructor(mentions: Mentions, coreTeam: CoreTeam) {
     this.from = coreTeam.members;
     this.mentions = mentions;
-    this.username = localStorage.getItem('github.username');
+    var ref = new Firebase("https://ng2-projects.firebaseio.com");
+    var auth;
+    if (auth = ref.getAuth()) {
+      this.username = auth.github.username;
+    }
   }
 
   onKeyUp(value: string) {
     this.username = value;
-    localStorage.setItem('github.username', value);
   }
 
   refresh() {

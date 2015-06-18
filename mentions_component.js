@@ -18,11 +18,14 @@ var MentionComponent = (function () {
         this.fetched = false;
         this.from = coreTeam.members;
         this.mentions = mentions;
-        this.username = localStorage.getItem('github.username');
+        var ref = new Firebase("https://ng2-projects.firebaseio.com");
+        var auth;
+        if (auth = ref.getAuth()) {
+            this.username = auth.github.username;
+        }
     }
     MentionComponent.prototype.onKeyUp = function (value) {
         this.username = value;
-        localStorage.setItem('github.username', value);
     };
     MentionComponent.prototype.refresh = function () {
         var username = this.username.trim();

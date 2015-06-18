@@ -1,9 +1,12 @@
 /// <reference path="typings/github.d.ts" />
-import {Component, View, NgFor} from 'angular2/angular2';
+import {Component, View, NgFor, NgIf} from 'angular2/angular2';
 import {Repository} from 'github';
 import {OrderedSet} from 'set';
 import {IssueComponent} from 'issue_component';
 import {MentionComponent} from 'mentions_component';
+
+declare var Firebase;
+var ref = new Firebase("https://ng2-projects.firebaseio.com");
 
 function _strCmp(a: string, b: string) {
   if (a === undefined) a = '';
@@ -40,12 +43,16 @@ function byName(a:any, b:any) {
 	selector: 'github-issues'
 })
 @View({
-  directives: [NgFor, IssueComponent, MentionComponent],
+  directives: [NgFor, IssueComponent, MentionComponent, NgIf],
   template: `
   <h1>GitHub</h1>
   <button (click)="loadIssues()">Load Issues {{repo.state}}</button>
-  Action: [ <a href (click)="setupAuthToken(); false">{{hasAuthToken() ? 'Using' : 'Needs'}} Github Auth Token</a>
-          (<a href="https://github.com/settings/developers" target="_blank">Get Token</a>) ]
+  <div *ng-if="hasAuthToken()">
+    Logged in as {{getUsername()}}
+  </div>
+  <div *ng-if="!hasAuthToken()">
+    <a href (click)="setupAuthToken(); false">Log in with Github</a>
+  </div>
 
   <h1>Mentions</h1>
     <gh-mentions org="angular" [days]="7"></gh-mentions>
@@ -181,13 +188,21 @@ export class GithubIssues {
   }
 
   setupAuthToken() {
-    localStorage.setItem('github.client_id', prompt("Github 'client_id':"));
-    localStorage.setItem('github.client_secret', prompt("Github 'client_sceret':"));
+    ref.authWithOAuthPopup("github", function(error, authData) {
+      if (error) {
+        console.log("Login Failed!", error);
+      } else {
+        console.log("Authenticated successfully with payload:", authData);
+      }
+    });
   }
 
   hasAuthToken() {
-    return localStorage.getItem('github.client_id')
-        && localStorage.getItem('github.client_secret');
+    return ref.getAuth();
+  }
+
+  getUsername() {
+    return ref.getAuth().github.username;
   }
 }
 
