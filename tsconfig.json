@@ -1,0 +1,14 @@
+{
+    "compilerOptions": {
+        "outDir": "build",
+        "sourceMap": true,
+        "sourceRoot": ".",
+        "module": "commonjs",
+        "target": "ES5",
+        "emitDecoratorMetadata": true
+    },
+    "files": [
+      "typings/angular2/angular2.d.ts",
+      "app.ts"
+    ]
+}
