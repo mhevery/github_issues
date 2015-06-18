@@ -1,3 +1,4 @@
+var ref = new Firebase("https://ng2-projects.firebaseio.com");
 var Repository = (function () {
     function Repository(username, repository) {
         this.username = username;
@@ -166,8 +167,10 @@ var Mentions = (function () {
 })();
 exports.Mentions = Mentions;
 function buildUrl(ep, params) {
-    params.client_id = localStorage.getItem('github.client_id');
-    params.client_secret = localStorage.getItem('github.client_secret');
+    var auth;
+    if (auth = ref.getAuth()) {
+        params.access_token = auth.github.accessToken;
+    }
     var strParams = [];
     for (var p in params) {
         strParams.push(p + "=" + params[p]);

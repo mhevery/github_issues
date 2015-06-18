@@ -1,3 +1,6 @@
+declare var Firebase;
+var ref = new Firebase("https://ng2-projects.firebaseio.com");
+
 export class Repository {
   state: string;
 
@@ -175,8 +178,10 @@ export class Mentions {
 }
 
 function buildUrl(ep: string, params: any): string {
-  params.client_id = localStorage.getItem('github.client_id');
-  params.client_secret = localStorage.getItem('github.client_secret');
+  var auth;
+  if (auth = ref.getAuth()) {
+    params.access_token = auth.github.accessToken;
+  }
 
   var strParams = [];
   for (let p in params) {
