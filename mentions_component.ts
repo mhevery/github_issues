@@ -16,7 +16,7 @@ import {CoreTeam} from 'core_team';
     <button (click)="refresh()">Refresh</button>
     <ul>
       <li *ng-for="#mention of mentions.list">
-        <a href="{{mention.url}}" target="_blank">{{'#' + mention.number + ': ' + mention.title}}</a>
+        <a href="{{mention.url}}" target="_blank">#{{mention.number}}: {{mention.title}}</a> ({{mention.state}})
       </li>
     </ul>
     <p *ng-if="!fetched">Refresh to see mentions</p>
