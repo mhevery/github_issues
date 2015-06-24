@@ -24,13 +24,12 @@ var MentionComponent = (function () {
             this.username = auth.github.username;
         }
     }
-    MentionComponent.prototype.onKeyUp = function (value) {
-        this.username = value;
-    };
     MentionComponent.prototype.refresh = function () {
         var username = this.username.trim();
-        this.mentions.refresh(username, this.org, this.days, this.from);
-        this.fetched = true;
+        if (username.length) {
+            this.mentions.refresh(username, this.org, this.days, this.from);
+            this.fetched = true;
+        }
     };
     MentionComponent = __decorate([
         angular2_1.Component({
@@ -39,7 +38,7 @@ var MentionComponent = (function () {
             appInjector: [github_1.Mentions, core_team_1.CoreTeam]
         }),
         angular2_1.View({
-            template: "\n  <div>\n    <input (keyup)=\"onKeyUp($event.target.value)\" [value]=\"username\">\n    <button (click)=\"refresh()\">Refresh</button>\n    <ul>\n      <li *ng-for=\"#mention of mentions.list\">\n        <a href=\"{{mention.url}}\" target=\"_blank\">{{'#' + mention.number + ': ' + mention.title}}</a>\n      </li>\n    </ul>\n    <p *ng-if=\"!fetched\">Refresh to see mentions</p>\n  </div>\n  ",
+            template: "\n  <div>\n    <input (keyup)=\"username = $event.target.value\" [value]=\"username\" placeholder=\"username\">\n    <button (click)=\"refresh()\" [disabled]=\"username.trim().length == 0\">Refresh</button>\n    <ul>\n      <li *ng-for=\"#mention of mentions.list\">\n        <a href=\"{{mention.url}}\" target=\"_blank\">#{{mention.number}}: {{mention.title}}</a> ({{mention.state}})\n      </li>\n    </ul>\n    <p *ng-if=\"!fetched\">Refresh to see mentions</p>\n  </div>\n  ",
             directives: [angular2_1.NgFor, angular2_1.NgIf]
         }), 
         __metadata('design:paramtypes', [github_1.Mentions, core_team_1.CoreTeam])

@@ -12,11 +12,11 @@ import {CoreTeam} from 'core_team';
 @View({
   template: `
   <div>
-    <input (keyup)="onKeyUp($event.target.value)" [value]="username">
-    <button (click)="refresh()">Refresh</button>
+    <input (keyup)="username = $event.target.value" [value]="username" placeholder="username">
+    <button (click)="refresh()" [disabled]="username.trim().length == 0">Refresh</button>
     <ul>
       <li *ng-for="#mention of mentions.list">
-        <a href="{{mention.url}}" target="_blank">{{'#' + mention.number + ': ' + mention.title}}</a>
+        <a href="{{mention.url}}" target="_blank">#{{mention.number}}: {{mention.title}}</a> ({{mention.state}})
       </li>
     </ul>
     <p *ng-if="!fetched">Refresh to see mentions</p>
@@ -42,13 +42,11 @@ export class MentionComponent {
     }
   }
 
-  onKeyUp(value: string) {
-    this.username = value;
-  }
-
   refresh() {
     let username = this.username.trim();
-    this.mentions.refresh(username, this.org, this.days, this.from);
-    this.fetched = true;
+    if (username.length) {
+      this.mentions.refresh(username, this.org, this.days, this.from);
+      this.fetched = true;
+    }
   }
 }
