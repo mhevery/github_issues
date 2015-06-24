@@ -142,7 +142,8 @@ var Mentions = (function () {
                     _this.list.push({
                         number: mention.number,
                         title: mention.title,
-                        url: mention.html_url
+                        url: mention.html_url,
+                        state: mention.state
                     });
                 });
             }

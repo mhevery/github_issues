@@ -130,7 +130,7 @@ export class Repository {
 }
 
 export class Mentions {
-  list: {title: string, url: string, number: number}[] = [];
+  list: {title: string, url: string, number: number, state: string}[] = [];
 
   refresh(username: string, org: string, days: any, from: string[]) {
     this.list = [];
@@ -149,7 +149,8 @@ export class Mentions {
           this.list.push({
             number: mention.number,
             title: mention.title,
-            url: mention.html_url
+            url: mention.html_url,
+            state: mention.state
           });
         });
       } else {
