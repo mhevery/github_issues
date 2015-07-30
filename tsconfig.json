@@ -1,14 +1,20 @@
 {
     "compilerOptions": {
+        "module": "commonjs",
+        "noImplicitAny": true,
+        "removeComments": false,
+        "preserveConstEnums": true,
         "outDir": "build",
         "sourceMap": true,
         "sourceRoot": ".",
-        "module": "commonjs",
         "target": "ES5",
-        "emitDecoratorMetadata": true
+        "emitDecoratorMetadata": true,
+        "experimentalDecorators": true
     },
     "files": [
+      "typings/firebase/firebase.d.ts",
       "typings/angular2/angular2.d.ts",
+      "typings/github.d.ts",
       "app.ts"
     ]
 }

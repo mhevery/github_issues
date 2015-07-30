@@ -1,4 +1,4 @@
-if (typeof __decorate !== "function") __decorate = function (decorators, target, key, desc) {
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
     if (typeof Reflect === "object" && typeof Reflect.decorate === "function") return Reflect.decorate(decorators, target, key, desc);
     switch (arguments.length) {
         case 2: return decorators.reduceRight(function(o, d) { return (d && d(o)) || o; }, target);
@@ -6,7 +6,7 @@ if (typeof __decorate !== "function") __decorate = function (decorators, target,
         case 4: return decorators.reduceRight(function(o, d) { return (d && d(target, key, o)) || o; }, desc);
     }
 };
-if (typeof __metadata !== "function") __metadata = function (k, v) {
+var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 var angular2_1 = require('angular2/angular2');
@@ -42,7 +42,7 @@ var MentionComponent = (function () {
             template: "\n  <div>\n    <input (keyup)=\"onKeyUp($event.target.value)\" [value]=\"username\">\n    <button (click)=\"refresh()\">Refresh</button>\n    <ul>\n      <li *ng-for=\"#mention of mentions.list\">\n        <a href=\"{{mention.url}}\" target=\"_blank\">{{'#' + mention.number + ': ' + mention.title}}</a>\n      </li>\n    </ul>\n    <p *ng-if=\"!fetched\">Refresh to see mentions</p>\n  </div>\n  ",
             directives: [angular2_1.NgFor, angular2_1.NgIf]
         }), 
-        __metadata('design:paramtypes', [github_1.Mentions, core_team_1.CoreTeam])
+        __metadata('design:paramtypes', [Mentions, CoreTeam])
     ], MentionComponent);
     return MentionComponent;
 })();
