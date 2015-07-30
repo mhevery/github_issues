@@ -1,4 +1,3 @@
-declare var Firebase;
 var ref = new Firebase("https://ng2-projects.firebaseio.com");
 
 export class Repository {
@@ -87,7 +86,7 @@ export class Repository {
   }
 
   _parseLabels(issue: Issue) {
-    var other = issue.labels_other = [];
+    var other: Array<string> = issue.labels_other = [];
     issue.priority = '';
     issue.type = '';
     //issue.component = '';
@@ -121,7 +120,7 @@ export class Repository {
         case 'hotlist':
         case 'issue_state':
         case 'type':
-          issue[name] = (issue[name] ? issue[name] + '; ' : '') + value;
+          (<any>issue)[name] = ((<any>issue)[name] ? (<any>issue)[name] + '; ' : '') + value;
           break;
         default:
           other.push(label.name);
@@ -146,7 +145,7 @@ export class Mentions {
       var status = xhr.status;
       if (200 <= status && status <= 300) {
         var mentions = JSON.parse(xhr.responseText);
-        mentions.items.forEach(mention => {
+        mentions.items.forEach((mention: Mention) => {
           this.list.push({
             number: mention.number,
             title: mention.title,
@@ -178,12 +177,12 @@ export class Mentions {
 }
 
 function buildUrl(ep: string, params: any): string {
-  var auth;
+  var auth: any;
   if (auth = ref.getAuth()) {
     params.access_token = auth.github.accessToken;
   }
 
-  var strParams = [];
+  var strParams: Array<string> = [];
   for (let p in params) {
     strParams.push(`${p}=${params[p]}`);
   }

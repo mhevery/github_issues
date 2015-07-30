@@ -32,6 +32,12 @@ interface PullRequest {
   
 }
 
+interface Mention {
+  number: number;
+  title: string;
+  html_url: string;
+}
+
 interface Assignee {
   login: string;
   id: number;
@@ -56,6 +62,6 @@ interface Repository {
   name: string;
   user: User;
   
-  fetchIssues(callback:(err, res:Repository)=>void):void;
-  fetchAllIssues(callback:(err, res:Repository)=>void):void;
+  fetchIssues(callback:(err: any, res:Repository)=>void):void;
+  fetchAllIssues(callback:(err: any, res:Repository)=>void):void;
 }

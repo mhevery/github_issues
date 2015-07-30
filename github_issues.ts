@@ -5,7 +5,6 @@ import {OrderedSet} from 'set';
 import {IssueComponent} from 'issue_component';
 import {MentionComponent} from 'mentions_component';
 
-declare var Firebase;
 var ref = new Firebase("https://ng2-projects.firebaseio.com");
 
 function _strCmp(a: string, b: string) {
@@ -102,7 +101,7 @@ export class GithubIssues {
   }
 
   getUsername() {
-    return ref.getAuth().github.username;
+    return (<any>ref.getAuth()).github.username;
   }
 }
 
@@ -162,7 +161,7 @@ class ComponentGroup {
   constructor(public name:string) { }
 
   add(issue:Issue) {
-    this.issues[issue.priority].set(issue);
+    (<any>this.issues)[issue.priority].set(issue);
   }
 }
 
