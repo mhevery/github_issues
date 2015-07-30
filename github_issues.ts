@@ -69,7 +69,8 @@ export class GithubIssues {
   onNewIssue(issue: Issue) {
     if (issue.needsTriage()) {
       this.triageIssues.set(issue);
-    } else if (issue.milestone) {
+    }
+    if (issue.milestone) {
       if (issue.assignee) this.milestoneAssignees.set(issue.assignee);
       this.milestones.setIfAbsent(new MilestoneGroup(issue.milestone)).add(issue);
     } else {
