@@ -169,7 +169,9 @@ var ComponentGroup = (function () {
             'P1': new set_1.OrderedSet(byPriority),
             'P2': new set_1.OrderedSet(byPriority),
             'P3': new set_1.OrderedSet(byPriority),
-            'P4': new set_1.OrderedSet(byPriority)
+            'P4': new set_1.OrderedSet(byPriority),
+            'P!': new set_1.OrderedSet(byPriority),
+            '': new set_1.OrderedSet(byPriority)
         };
     }
     ComponentGroup.prototype.add = function (issue) {

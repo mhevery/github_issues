@@ -156,7 +156,9 @@ class ComponentGroup {
     'P1': new OrderedSet<Issue>(byPriority),
     'P2': new OrderedSet<Issue>(byPriority),
     'P3': new OrderedSet<Issue>(byPriority),
-    'P4': new OrderedSet<Issue>(byPriority)
+    'P4': new OrderedSet<Issue>(byPriority),
+    'P!': new OrderedSet<Issue>(byPriority),
+    '': new OrderedSet<Issue>(byPriority)
   }
 
   constructor(public name:string) { }
