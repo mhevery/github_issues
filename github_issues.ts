@@ -4,6 +4,7 @@ import {Repository} from 'github';
 import {OrderedSet} from 'set';
 import {IssueComponent} from 'issue_component';
 import {MentionComponent} from 'mentions_component';
+import {coreTeam} from 'core_team';
 
 var ref = new Firebase("https://ng2-projects.firebaseio.com");
 
@@ -38,6 +39,19 @@ function byName(a:any, b:any) {
   return a.name == b.name ? 0 : a.name < b.name ? -1 : 1;
 }
 
+var prAssigneeMilestone: Milestone = {
+  number: -1,
+  html_url: null,
+  state: null, 
+  title: 'PRs by Assignee'
+};
+var prAuthorMilestone: Milestone = {
+  number: -1,
+  html_url: null,
+  state: null, 
+  title: 'PRs by Author'
+};
+
 @Component({
 	selector: 'github-issues'
 })
@@ -47,10 +61,15 @@ function byName(a:any, b:any) {
 })
 export class GithubIssues {
   triageIssues = new OrderedSet<Issue>(byNumber);
-  prIssues = new OrderedSet<Issue>(byPR);
   repo = new Repository("angular", "angular");
-  milestoneAssignees = new OrderedSet<Assignee>((a:Assignee, b:Assignee) =>
-    a.login == b.login ? 0 : a.login < b.login ? -1 : 1);
+  milestoneUsers = new OrderedSet<User>((a:User, b:User) => {
+    var aLogin = a ? a.login.toLowerCase() : '';
+    var aIsCore = coreTeam.has(aLogin);
+    var bLogin = b ? b.login.toLowerCase() : '';
+    var bIsCore = coreTeam.has(bLogin);
+    if (aIsCore != bIsCore) return aIsCore ? 1 : -1;
+    return _strCmp(aLogin, bLogin);
+  });
   milestones = new OrderedSet<MilestoneGroup>(byMilestonGroup);
   backlogComponents = new OrderedSet<ComponentGroup>(byName);
   hotlistIssues = new OrderedSet<HotlistGroup>(byName);
@@ -71,8 +90,8 @@ export class GithubIssues {
       this.triageIssues.set(issue);
     }
     if (issue.milestone) {
-      if (issue.assignee) this.milestoneAssignees.set(issue.assignee);
-      this.milestones.setIfAbsent(new MilestoneGroup(issue.milestone)).add(issue);
+      if (issue.assignee) this.milestoneUsers.set(issue.assignee);
+      this.milestones.setIfAbsent(new MilestoneGroup(issue.milestone)).addByAsignee(issue);
     } else {
       this.backlogComponents.setIfAbsent(new ComponentGroup(issue.comp)).add(issue);
     }
@@ -83,8 +102,14 @@ export class GithubIssues {
     }
   }
 
-  onNewPr(issue: Issue) {
-    this.prIssues.set(issue);
+  onNewPr(pr: Issue) {
+    // By Assignee
+    if (pr.assignee) this.milestoneUsers.set(pr.assignee);
+    this.milestones.setIfAbsent(new MilestoneGroup(prAssigneeMilestone)).addByAsignee(pr);
+
+    // By Author
+    if (pr.user) this.milestoneUsers.set(pr.user);
+    this.milestones.setIfAbsent(new MilestoneGroup(prAuthorMilestone)).addByUser(pr);
   }
 
   setupAuthToken() {
@@ -106,29 +131,39 @@ export class GithubIssues {
   }
 }
 
-function byAssigneeGroup(a: AssigneeGroup, b: AssigneeGroup) {
-  return _strCmp(a.assignee.login, b.assignee.login);
+function byUserGroup(a: UserGroup, b: UserGroup) {
+  var aUser = a.user ? a.user.login.toLowerCase() : '';
+  var bUser = b.user ? b.user.login.toLowerCase() : '';
+  return _strCmp(aUser, bUser);
 }
 
 class MilestoneGroup {
   number: number;
-  assignees = new OrderedSet<AssigneeGroup>(byAssigneeGroup);
-  noAssignee = new OrderedSet<Issue>(byNumber);
+  users = new OrderedSet<UserGroup>(byUserGroup);
+  noUser = new OrderedSet<Issue>(byNumber);
 
   constructor(public milestone: Milestone) {
     this.number = milestone.number;
   }
 
-  add(issue: Issue) {
+  addByAsignee(issue: Issue) {
     if (issue.assignee) {
-      this.assignees.setIfAbsent(new AssigneeGroup(issue.assignee)).add(issue);
+      this.users.setIfAbsent(new UserGroup(issue.assignee)).add(issue);
     } else {
-      this.noAssignee.set(issue);
+      this.noUser.set(issue);
     }
   }
 
-  getIssues(assignee: Assignee) {
-    return this.assignees.setIfAbsent(new AssigneeGroup(assignee)).issues.items;
+  addByUser(issue: Issue) {
+    if (issue.user) {
+      this.users.setIfAbsent(new UserGroup(issue.user)).add(issue);
+    } else {
+      this.noUser.set(issue);
+    }
+  }
+
+  getIssues(assignee: User) {
+    return this.users.setIfAbsent(new UserGroup(assignee)).issues.items;
   }
 }
 
@@ -141,9 +176,9 @@ function byPriority(a: Issue, b:Issue): number {
 }
 
 
-class AssigneeGroup {
+class UserGroup {
   issues = new OrderedSet<Issue>(byPriority);
-  constructor(public assignee:Assignee) { }
+  constructor(public user:User) { }
 
   add(issue: Issue) {
     this.issues.set(issue);

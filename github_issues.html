@@ -7,31 +7,33 @@
   <a href (click)="setupAuthToken(); false">Log in with Github</a>
 </div>
 
-<h1>Mentions</h1>
-  <gh-mentions org="angular" [days]="7"></gh-mentions>
-
 <h1>Milestone</h1>
 <table border=1 cellspacing=0>
   <tr>
     <th><a href="https://github.com/angular/angular/issues?q=is%3Aopen+is%3Aissue+no%3Aassignee" target="_blank">!Assigned</a></th>
-    <th *ng-for="var assignee of milestoneAssignees.items">
-      <a href="https://github.com/angular/angular/issues?q=is%3Aopen+assignee%3A{{assignee.login}}" target="_blank">
-        <img width="60" height="60" [src]="assignee.avatar_url || ''" title="{{assignee.login}}">
+    <th *ng-for="var user of milestoneUsers.items">
+      <a href="https://github.com/angular/angular/issues?q=is%3Aopen+assignee%3A{{user.login}}" target="_blank">
+        <img width="60" height="60" [src]="user.avatar_url || ''" title="{{user.login}}">
       </a>
     </th>
   </tr>
   <tbody *ng-for="var milestoneGroup of milestones.items">
-    <tr><td [col-span]="milestoneAssignees.items.length + 1"><h2>{{milestoneGroup.milestone.title}}</h2></td></tr>
+    <tr><td [col-span]="milestoneUsers.items.length + 1"><h2>{{milestoneGroup.milestone.title}}</h2></td></tr>
     <tr>
       <td valign="top">
-        <issue *ng-for="var issue of milestoneGroup.noAssignee.items" [issue]="issue" [compact]="true"></issue>
+        <issue *ng-for="var issue of milestoneGroup.noUser.items" [issue]="issue" [compact]="true"></issue>
       </td>
-      <td *ng-for="var assignee of milestoneAssignees.items" valign="top">
-        <issue *ng-for="var issue of milestoneGroup.getIssues(assignee)" [issue]="issue" [compact]="true"></issue>
+      <td *ng-for="var user of milestoneUsers.items" valign="top">
+        <issue *ng-for="var issue of milestoneGroup.getIssues(user)" [issue]="issue" [compact]="true"></issue>
       </td>
     </tr>
   </tbody>
 <table>
+
+<div [hidden]="triageIssues.items.length">
+  <h1>Triage Issues: {{triageIssues.items.length}}</h1>
+  <issue *ng-for="var issue of triageIssues.items" [issue]="issue"></issue>
+</div>
 
 <h1>Hotlist</h1>
 <table border=1 cellspacing=0>
@@ -63,39 +65,7 @@
   </tr>
 </table>
 
-<h1>Triage</h1>
-<table border=1 cellspacing=0>
-  <tr>
-    <th><h2>Issues: {{triageIssues.items.length}}</h2></th>
-    <th><h2>PRs: {{prIssues.items.length}}</h2></th>
-  </tr>
-  <tr>
-    <td valign="top" width="40%">
-      <issue *ng-for="var issue of triageIssues.items" [issue]="issue"></issue>
-    </td>
-    <td valign="top" width="60%">
-      <table>
-          <tr>
-            <th>PR#</th>
-            <th>Description</th>
-            <th>PR State</th>
-            <th>PR Action</th>
-            <th>Priority</th>
-            <th>Customer</th>
-            <th>Labels</th>
-            <th>Assigned</th>
-          </tr>
-          <tr *ng-for="var issue of prIssues.items">
-            <td><a target="_blank"  [href]="issue.html_url">#{{issue.number}}</a></td>
-            <td><a target="_blank"  [href]="issue.html_url">{{issue.title}}</a></td>
-            <td nowrap>{{issue.pr_state}}</td>
-            <td nowrap>{{issue.pr_action}}</td>
-            <td nowrap>{{issue.priority}}</td>
-            <td nowrap>{{issue.cust}}</td>
-            <td>{{issue.labels_other.join('; ')}}</td>
-            <td><a href="{{issue.assignee?.login}}" target="_blank"><img width="15" height="15" [hidden]="!issue.assignee" [src]="issue.assignee?.avatar_url || ''"> {{issue.assignee?.login}}</a></td>
-          </tr>
-        </table>
-    </td>
-  </tr>
-</table>
+<h1>Mentions</h1>
+  <gh-mentions org="angular" [days]="7"></gh-mentions>
+
+

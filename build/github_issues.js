@@ -15,6 +15,7 @@ var github_1 = require('github');
 var set_1 = require('set');
 var issue_component_1 = require('issue_component');
 var mentions_component_1 = require('mentions_component');
+var core_team_1 = require('core_team');
 var ref = new Firebase("https://ng2-projects.firebaseio.com");
 function _strCmp(a, b) {
     if (a === undefined)
@@ -48,13 +49,30 @@ function byMilestonGroup(a, b) {
 function byName(a, b) {
     return a.name == b.name ? 0 : a.name < b.name ? -1 : 1;
 }
+var prAssigneeMilestone = {
+    number: -1,
+    html_url: null,
+    state: null,
+    title: 'PRs by Assignee'
+};
+var prAuthorMilestone = {
+    number: -1,
+    html_url: null,
+    state: null,
+    title: 'PRs by Author'
+};
 var GithubIssues = (function () {
     function GithubIssues() {
         this.triageIssues = new set_1.OrderedSet(byNumber);
-        this.prIssues = new set_1.OrderedSet(byPR);
         this.repo = new github_1.Repository("angular", "angular");
-        this.milestoneAssignees = new set_1.OrderedSet(function (a, b) {
-            return a.login == b.login ? 0 : a.login < b.login ? -1 : 1;
+        this.milestoneUsers = new set_1.OrderedSet(function (a, b) {
+            var aLogin = a ? a.login.toLowerCase() : '';
+            var aIsCore = core_team_1.coreTeam.has(aLogin);
+            var bLogin = b ? b.login.toLowerCase() : '';
+            var bIsCore = core_team_1.coreTeam.has(bLogin);
+            if (aIsCore != bIsCore)
+                return aIsCore ? 1 : -1;
+            return _strCmp(aLogin, bLogin);
         });
         this.milestones = new set_1.OrderedSet(byMilestonGroup);
         this.backlogComponents = new set_1.OrderedSet(byName);
@@ -73,8 +91,8 @@ var GithubIssues = (function () {
         }
         if (issue.milestone) {
             if (issue.assignee)
-                this.milestoneAssignees.set(issue.assignee);
-            this.milestones.setIfAbsent(new MilestoneGroup(issue.milestone)).add(issue);
+                this.milestoneUsers.set(issue.assignee);
+            this.milestones.setIfAbsent(new MilestoneGroup(issue.milestone)).addByAsignee(issue);
         }
         else {
             this.backlogComponents.setIfAbsent(new ComponentGroup(issue.comp)).add(issue);
@@ -85,8 +103,15 @@ var GithubIssues = (function () {
             });
         }
     };
-    GithubIssues.prototype.onNewPr = function (issue) {
-        this.prIssues.set(issue);
+    GithubIssues.prototype.onNewPr = function (pr) {
+        // By Assignee
+        if (pr.assignee)
+            this.milestoneUsers.set(pr.assignee);
+        this.milestones.setIfAbsent(new MilestoneGroup(prAssigneeMilestone)).addByAsignee(pr);
+        // By Author
+        if (pr.user)
+            this.milestoneUsers.set(pr.user);
+        this.milestones.setIfAbsent(new MilestoneGroup(prAuthorMilestone)).addByUser(pr);
     };
     GithubIssues.prototype.setupAuthToken = function () {
         ref.authWithOAuthPopup("github", function (error, authData) {
@@ -117,26 +142,36 @@ var GithubIssues = (function () {
     return GithubIssues;
 })();
 exports.GithubIssues = GithubIssues;
-function byAssigneeGroup(a, b) {
-    return _strCmp(a.assignee.login, b.assignee.login);
+function byUserGroup(a, b) {
+    var aUser = a.user ? a.user.login.toLowerCase() : '';
+    var bUser = b.user ? b.user.login.toLowerCase() : '';
+    return _strCmp(aUser, bUser);
 }
 var MilestoneGroup = (function () {
     function MilestoneGroup(milestone) {
         this.milestone = milestone;
-        this.assignees = new set_1.OrderedSet(byAssigneeGroup);
-        this.noAssignee = new set_1.OrderedSet(byNumber);
+        this.users = new set_1.OrderedSet(byUserGroup);
+        this.noUser = new set_1.OrderedSet(byNumber);
         this.number = milestone.number;
     }
-    MilestoneGroup.prototype.add = function (issue) {
+    MilestoneGroup.prototype.addByAsignee = function (issue) {
         if (issue.assignee) {
-            this.assignees.setIfAbsent(new AssigneeGroup(issue.assignee)).add(issue);
+            this.users.setIfAbsent(new UserGroup(issue.assignee)).add(issue);
         }
         else {
-            this.noAssignee.set(issue);
+            this.noUser.set(issue);
+        }
+    };
+    MilestoneGroup.prototype.addByUser = function (issue) {
+        if (issue.user) {
+            this.users.setIfAbsent(new UserGroup(issue.user)).add(issue);
+        }
+        else {
+            this.noUser.set(issue);
         }
     };
     MilestoneGroup.prototype.getIssues = function (assignee) {
-        return this.assignees.setIfAbsent(new AssigneeGroup(assignee)).issues.items;
+        return this.users.setIfAbsent(new UserGroup(assignee)).issues.items;
     };
     return MilestoneGroup;
 })();
@@ -151,15 +186,15 @@ function byPriority(a, b) {
         return _strCmp(a.effort, b.effort);
     return a.number - b.number;
 }
-var AssigneeGroup = (function () {
-    function AssigneeGroup(assignee) {
-        this.assignee = assignee;
+var UserGroup = (function () {
+    function UserGroup(user) {
+        this.user = user;
         this.issues = new set_1.OrderedSet(byPriority);
     }
-    AssigneeGroup.prototype.add = function (issue) {
+    UserGroup.prototype.add = function (issue) {
         this.issues.set(issue);
     };
-    return AssigneeGroup;
+    return UserGroup;
 })();
 var ComponentGroup = (function () {
     function ComponentGroup(name) {
