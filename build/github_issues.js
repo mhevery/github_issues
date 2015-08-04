@@ -71,7 +71,7 @@ var GithubIssues = (function () {
             var bLogin = b ? b.login.toLowerCase() : '';
             var bIsCore = core_team_1.coreTeam.has(bLogin);
             if (aIsCore != bIsCore)
-                return aIsCore ? 1 : -1;
+                return aIsCore ? -1 : 1;
             return _strCmp(aLogin, bLogin);
         });
         this.milestones = new set_1.OrderedSet(byMilestonGroup);

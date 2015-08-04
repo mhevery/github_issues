@@ -2,26 +2,34 @@ var CoreTeam = (function () {
     function CoreTeam() {
         var _this = this;
         this.members = [
-            'mhevery',
+            'alexeagle',
+            'alxhub',
             'IgorMinar',
             'bradlygreen',
             'btford',
-            'jbdeboer',
-            'jeffbcross',
-            'naomiblack',
-            'tbosch',
-            'petebacondarwin',
-            'matsko',
             'caitp',
+            'jbdeboer',
+            'jelbourn',
+            'jeffbcross',
             'juliemr',
+            'jteplitz602',
+            'kegluneq',
+            'matsko',
+            'mlaval',
+            'matanlurey',
+            'mprobst',
+            'mhevery',
+            'naomiblack',
+            'petebacondarwin',
+            'pkozlowski-opensource',
             'rkirov',
-            'vsavkin',
+            'sjelin',
             'robertmesserle',
-            'alexeagle',
-            'alxhub',
             'rodyhaddad',
+            'tbosch',
+            'vsavkin',
             'vicb',
-            'mprobst'
+            'yjbanov'
         ];
         this.memberSet = {};
         this.members.forEach(function (user) { return _this.memberSet[user.toLowerCase()] = true; });

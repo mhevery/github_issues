@@ -67,7 +67,7 @@ export class GithubIssues {
     var aIsCore = coreTeam.has(aLogin);
     var bLogin = b ? b.login.toLowerCase() : '';
     var bIsCore = coreTeam.has(bLogin);
-    if (aIsCore != bIsCore) return aIsCore ? 1 : -1;
+    if (aIsCore != bIsCore) return aIsCore ? -1 : 1;
     return _strCmp(aLogin, bLogin);
   });
   milestones = new OrderedSet<MilestoneGroup>(byMilestonGroup);
