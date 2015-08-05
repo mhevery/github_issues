@@ -1,9 +1,9 @@
 <div>
-  <div [hidden]="issue.pull_request"
+  <span [hidden]="issue.pull_request"
   ><span title="{{issue.priority}}" style="width: .6em; display: inline-block">{{periorityIcon()}}</span
   ><span title="{{issue.type}}" style="width: .7em; display: inline-block">{{typeIcon()}}</span
   ><span title="{{issue.effort}}" style="width: 1em; display: inline-block">{{effortIcon()}}</span
-  ></div
+  ></span
   ><a target="_blank" title="[{{issue.comp}}] {{issue.title}}" [href]="issue.html_url">{{issue.number}}</a
   ><span title="{{issue.action}}">{{stateIcon()}}</span>
   <span [hidden]="compact">

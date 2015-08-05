@@ -30,7 +30,7 @@
   </tbody>
 <table>
 
-<div [hidden]="triageIssues.items.length">
+<div [hidden]="triageIssues.items.length == 0">
   <h1>Triage Issues: {{triageIssues.items.length}}</h1>
   <issue *ng-for="var issue of triageIssues.items" [issue]="issue"></issue>
 </div>
