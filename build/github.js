@@ -25,6 +25,9 @@ var Repository = (function () {
                 page: page
             });
             http.open("GET", url, true);
+            if (ref.getAuth()) {
+                http.setRequestHeader("Authorization", "token " + ref.getAuth().github.accessToken);
+            }
             http.onreadystatechange = function () {
                 var response = http.responseText;
                 if (http.readyState == 4) {
@@ -152,6 +155,9 @@ var Mentions = (function () {
             }
         };
         xhr.open("GET", url);
+        if (ref.getAuth()) {
+            xhr.setRequestHeader("Authorization", "token " + ref.getAuth().github.accessToken);
+        }
         xhr.send();
     };
     Mentions.prototype._buildQuery = function (username, org, days, from) {
@@ -168,10 +174,6 @@ var Mentions = (function () {
 })();
 exports.Mentions = Mentions;
 function buildUrl(ep, params) {
-    var auth;
-    if (auth = ref.getAuth()) {
-        params.access_token = auth.github.accessToken;
-    }
     var strParams = [];
     for (var p in params) {
         strParams.push(p + "=" + params[p]);

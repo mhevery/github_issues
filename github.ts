@@ -30,6 +30,9 @@ export class Repository {
         page: page
       });
       http.open("GET", url, true);
+      if (ref.getAuth()) {
+        http.setRequestHeader("Authorization", "token " + (<any>ref.getAuth()).github.accessToken);
+      }
 
       http.onreadystatechange = () => {
         var response = http.responseText;
@@ -159,6 +162,9 @@ export class Mentions {
     }
 
     xhr.open("GET", url);
+    if (ref.getAuth()) {
+      xhr.setRequestHeader("Authorization", "token " + (<any>ref.getAuth()).github.accessToken);
+    }
     xhr.send();
   }
 
@@ -178,11 +184,6 @@ export class Mentions {
 }
 
 function buildUrl(ep: string, params: any): string {
-  var auth: any;
-  if (auth = ref.getAuth()) {
-    params.access_token = auth.github.accessToken;
-  }
-
   var strParams: Array<string> = [];
   for (let p in params) {
     strParams.push(`${p}=${params[p]}`);
