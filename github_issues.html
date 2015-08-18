@@ -26,8 +26,8 @@
 <h1>Presubmit Queue</h1>
 <ul>
   <li *ng-for="var item of presubmit.items" [class-name]="item?.travisStatus">
-    <a href="https://github.com/angular/angular/tree/{{item.branchName}}">{{item.branchName}}</a>
-    ( <a href="https://travis-ci.org/angular/angular/builds/{{item?.travisJob}}">{{item?.travisStatus}}</a> ) 
+    <a href="https://github.com/angular/angular/tree/{{item.branchName}}" target="_blank">{{item.branchName}}</a>
+    ( <a href="https://travis-ci.org/angular/angular/builds/{{item?.travisJob}}" target="_blank">{{item?.travisStatus}}</a> ) 
   </li>
 </ul>
 </div>
