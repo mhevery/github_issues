@@ -15,6 +15,7 @@
       "typings/firebase/firebase.d.ts",
       "typings/angular2/angular2.d.ts",
       "typings/github.d.ts",
+      "typings/travis.d.ts",
       "app.ts"
     ]
 }

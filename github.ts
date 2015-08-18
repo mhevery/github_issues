@@ -1,5 +1,36 @@
 var ref = new Firebase("https://ng2-projects.firebaseio.com");
 
+const GIT_API = 'https://api.github.com/repos/angular/angular/';
+const TRAVIS_API = 'https://api.travis-ci.org/repos/angular/angular/';
+
+function gitToken() {
+  if (ref.getAuth()) {
+    return (<any>ref.getAuth()).github.accessToken    
+  }
+  return null;
+}
+
+function urlGET(url: string, token: string, cb:(statusCode: number, data:any) => void) {
+  var http = new XMLHttpRequest();
+  http.open('GET', url);
+  if (token) {
+    http.setRequestHeader("Authorization", "token " + token);
+  }
+  http.onreadystatechange = () => {
+    if (http.readyState == 4) {
+      var status = http.status;
+      var data = http.responseText;
+      if (data.length && (data.charAt(0) == '[' || data.charAt(0) == '{')) {
+        data = JSON.parse(data);
+      }
+      cb(status, data);
+    }
+  }
+  http.send();
+}
+
+
+
 export class Repository {
   state: string;
 
@@ -16,7 +47,19 @@ export class Repository {
   constructor(public username: string, public repository: string) {
     this.state = '';
   }
-
+  
+  loadBranches(notify:(name: string, job: string, status: string) => void) {
+    urlGET(GIT_API + 'branches', gitToken(), (code: number, data: List<Branch>) => {
+      data.forEach((branch: Branch) => {
+        if (branch.name.indexOf('presubmit-') == 0) {
+          urlGET(TRAVIS_API + 'branches/' + branch.name, null, (code: number, travis: TravisBranch) => {
+            notify(branch.name, travis.branch.id, travis.branch.state);
+          });
+        }
+      });
+    });
+  }
+  
   refresh() {
     this.state = 'refreshing';
     this.previousIssues = this.issues;
@@ -29,29 +72,20 @@ export class Repository {
         per_page: 100,
         page: page
       });
-      http.open("GET", url, true);
-      if (ref.getAuth()) {
-        http.setRequestHeader("Authorization", "token " + (<any>ref.getAuth()).github.accessToken);
-      }
-
-      http.onreadystatechange = () => {
-        var response = http.responseText;
-        if (http.readyState == 4) {
-          if(http.status == 200) {
-            var issues: Array<Issue> = JSON.parse(response);
-            issues.forEach(this._processIssues.bind(this));
-            if (issues.length >= 100) {
-              fetchPage(page + 1);
-            } else {
-              this.state = '';
-              this._notifyRemoves();
-            }
+      urlGET(url, gitToken(), (status, data) => {
+        if(status == 200) {
+          var issues: Array<Issue> = data;
+          issues.forEach(this._processIssues.bind(this));
+          if (issues.length >= 100) {
+            fetchPage(page + 1);
           } else {
-            console.error(response);
+            this.state = '';
+            this._notifyRemoves();
           }
+        } else {
+          console.error(data);
         }
-      }
-      http.send();
+      });
     }
     fetchPage(0);
   }

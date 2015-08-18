@@ -1,4 +1,30 @@
 var ref = new Firebase("https://ng2-projects.firebaseio.com");
+var GIT_API = 'https://api.github.com/repos/angular/angular/';
+var TRAVIS_API = 'https://api.travis-ci.org/repos/angular/angular/';
+function gitToken() {
+    if (ref.getAuth()) {
+        return ref.getAuth().github.accessToken;
+    }
+    return null;
+}
+function urlGET(url, token, cb) {
+    var http = new XMLHttpRequest();
+    http.open('GET', url);
+    if (token) {
+        http.setRequestHeader("Authorization", "token " + token);
+    }
+    http.onreadystatechange = function () {
+        if (http.readyState == 4) {
+            var status = http.status;
+            var data = http.responseText;
+            if (data.length && (data.charAt(0) == '[' || data.charAt(0) == '{')) {
+                data = JSON.parse(data);
+            }
+            cb(status, data);
+        }
+    };
+    http.send();
+}
 var Repository = (function () {
     function Repository(username, repository) {
         this.username = username;
@@ -13,6 +39,17 @@ var Repository = (function () {
         this.onRemovedPR = function () { return null; };
         this.state = '';
     }
+    Repository.prototype.loadBranches = function (notify) {
+        urlGET(GIT_API + 'branches', gitToken(), function (code, data) {
+            data.forEach(function (branch) {
+                if (branch.name.indexOf('presubmit-') == 0) {
+                    urlGET(TRAVIS_API + 'branches/' + branch.name, null, function (code, travis) {
+                        notify(branch.name, travis.branch.id, travis.branch.state);
+                    });
+                }
+            });
+        });
+    };
     Repository.prototype.refresh = function () {
         var _this = this;
         this.state = 'refreshing';
@@ -24,30 +61,22 @@ var Repository = (function () {
                 per_page: 100,
                 page: page
             });
-            http.open("GET", url, true);
-            if (ref.getAuth()) {
-                http.setRequestHeader("Authorization", "token " + ref.getAuth().github.accessToken);
-            }
-            http.onreadystatechange = function () {
-                var response = http.responseText;
-                if (http.readyState == 4) {
-                    if (http.status == 200) {
-                        var issues = JSON.parse(response);
-                        issues.forEach(_this._processIssues.bind(_this));
-                        if (issues.length >= 100) {
-                            fetchPage(page + 1);
-                        }
-                        else {
-                            _this.state = '';
-                            _this._notifyRemoves();
-                        }
+            urlGET(url, gitToken(), function (status, data) {
+                if (status == 200) {
+                    var issues = data;
+                    issues.forEach(_this._processIssues.bind(_this));
+                    if (issues.length >= 100) {
+                        fetchPage(page + 1);
                     }
                     else {
-                        console.error(response);
+                        _this.state = '';
+                        _this._notifyRemoves();
                     }
                 }
-            };
-            http.send();
+                else {
+                    console.error(data);
+                }
+            });
         };
         fetchPage(0);
     };

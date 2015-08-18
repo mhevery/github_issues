@@ -61,8 +61,19 @@ var prAuthorMilestone = {
     state: null,
     title: 'PRs by Author'
 };
+var Presubmit = (function () {
+    function Presubmit(branchName, travisJob, travisStatus) {
+        this.branchName = branchName;
+        this.travisJob = travisJob;
+        this.travisStatus = travisStatus;
+    }
+    return Presubmit;
+})();
 var GithubIssues = (function () {
     function GithubIssues() {
+        this.presubmit = new set_1.OrderedSet(function (a, b) {
+            return _strCmp(a.branchName, b.branchName);
+        });
         this.triageIssues = new set_1.OrderedSet(byNumber);
         this.repo = new github_1.Repository("angular", "angular");
         this.milestoneUsers = new set_1.OrderedSet(function (a, b) {
@@ -80,7 +91,14 @@ var GithubIssues = (function () {
         this.repo.onNewIssue = this.onNewIssue.bind(this);
         this.repo.onNewPR = this.onNewPr.bind(this);
         this.loadIssues();
+        this.loadPresubmit();
     }
+    GithubIssues.prototype.loadPresubmit = function () {
+        var _this = this;
+        this.repo.loadBranches(function (branchName, travisJob, travisStatus) {
+            _this.presubmit.setIfAbsent(new Presubmit(branchName, travisJob, travisStatus));
+        });
+    };
     GithubIssues.prototype.loadIssues = function () {
         this.repo.refresh();
     };

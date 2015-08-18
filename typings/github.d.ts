@@ -59,6 +59,16 @@ interface Milestone {
   title: string
 }
 
+interface Branch {
+  name: string,
+  commit: Commit
+}
+
+interface Commit {
+  sha: string,
+  url: string
+}
+
 interface Repository {
   issues: Array<Issue>;
   name: string;

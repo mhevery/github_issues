@@ -52,6 +52,13 @@ var prAuthorMilestone: Milestone = {
   title: 'PRs by Author'
 };
 
+class Presubmit {
+  constructor(
+    public branchName: string, 
+    public travisJob: string, 
+    public travisStatus: string) { }
+}
+
 @Component({
 	selector: 'github-issues'
 })
@@ -60,6 +67,9 @@ var prAuthorMilestone: Milestone = {
   templateUrl: 'github_issues.html' 
 })
 export class GithubIssues {
+  presubmit = new OrderedSet<Presubmit>((a:Presubmit, b:Presubmit) => {
+    return _strCmp(a.branchName, b.branchName);
+  });
   triageIssues = new OrderedSet<Issue>(byNumber);
   repo = new Repository("angular", "angular");
   milestoneUsers = new OrderedSet<User>((a:User, b:User) => {
@@ -79,6 +89,13 @@ export class GithubIssues {
     this.repo.onNewIssue = this.onNewIssue.bind(this);
     this.repo.onNewPR = this.onNewPr.bind(this);
     this.loadIssues();
+    this.loadPresubmit();
+  }
+  
+  loadPresubmit() {
+    this.repo.loadBranches((branchName, travisJob, travisStatus) => {
+      this.presubmit.setIfAbsent(new Presubmit(branchName, travisJob, travisStatus));
+    });
   }
 
   loadIssues() {

@@ -1,3 +1,18 @@
+<style>
+  li.passed {
+    background-color: #CCFFCC;
+  }
+  li.canceled {
+    background-color: #CCCCCC;
+  }
+  li.failed {
+    background-color: #FFCCCC;
+  }
+  li.errored {
+    background-color: #FF8888;
+  }
+</style>
+
 <h1>GitHub</h1>
 <button (click)="loadIssues()">Load Issues {{repo.state}}</button>
 <div *ng-if="hasAuthToken()">
@@ -5,6 +20,16 @@
 </div>
 <div *ng-if="!hasAuthToken()">
   <a href (click)="setupAuthToken(); false">Log in with Github</a>
+</div>
+
+<div [hidden]="presubmit.items.length == 0">
+<h1>Presubmit Queue</h1>
+<ul>
+  <li *ng-for="var item of presubmit.items" [class-name]="item?.travisStatus">
+    <a href="https://github.com/angular/angular/tree/{{item.branchName}}">{{item.branchName}}</a>
+    ( <a href="https://travis-ci.org/angular/angular/builds/{{item?.travisJob}}">{{item?.travisStatus}}</a> ) 
+  </li>
+</ul>
 </div>
 
 <h1>Milestone</h1>
