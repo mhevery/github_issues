@@ -40,7 +40,9 @@ var Repository = (function () {
         this.state = '';
     }
     Repository.prototype.loadBranches = function (notify) {
-        urlGET(GIT_API + 'branches', gitToken(), function (code, data) {
+        urlGET(GIT_API + 'branches?per_page=100', gitToken(), function (code, data) {
+            if (code !== 200)
+                return;
             data.forEach(function (branch) {
                 if (branch.name.indexOf('presubmit-') == 0) {
                     urlGET(TRAVIS_API + 'branches/' + branch.name, null, function (code, travis) {

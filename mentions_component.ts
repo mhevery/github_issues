@@ -1,14 +1,11 @@
 import {Component, View, NgFor, NgIf} from 'angular2/angular2';
-// https://github.com/Microsoft/TypeScript/issues/4092
-//import {Mentions} from './github';
-//import {CoreTeam} from 'core_team';
-import * as m from './github';
-import * as c from 'core_team';
+import {Mentions} from './github';
+import {CoreTeam} from './core_team';
 
 @Component({
   selector: 'gh-mentions',
   properties: ['org', 'days'],
-  appInjector: [m.Mentions, c.CoreTeam]
+  providers: [Mentions, CoreTeam]
 })
 @View({
   template: `
@@ -30,10 +27,10 @@ export class MentionComponent {
   days: number;
   username: string = '';
   from: string[]
-  mentions: m.Mentions;
+  mentions: Mentions;
   fetched: boolean = false;
 
-  constructor(mentions: m.Mentions, coreTeam: c.CoreTeam) {
+  constructor(mentions: Mentions, coreTeam: CoreTeam) {
     this.from = coreTeam.members;
     this.mentions = mentions;
     var ref = new Firebase("https://ng2-projects.firebaseio.com");

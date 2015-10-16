@@ -9,13 +9,12 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-/// <reference path="typings/github.d.ts" />
 var angular2_1 = require('angular2/angular2');
-var github_1 = require('github');
-var set_1 = require('set');
-var issue_component_1 = require('issue_component');
-var mentions_component_1 = require('mentions_component');
-var core_team_1 = require('core_team');
+var github_1 = require('./github');
+var set_1 = require('./set');
+var issue_component_1 = require('./issue_component');
+var mentions_component_1 = require('./mentions_component');
+var core_team_1 = require('./core_team');
 var ref = new Firebase("https://ng2-projects.firebaseio.com");
 function _strCmp(a, b) {
     if (a === undefined)
@@ -149,9 +148,7 @@ var GithubIssues = (function () {
     };
     GithubIssues = __decorate([
         angular2_1.Component({
-            selector: 'github-issues'
-        }),
-        angular2_1.View({
+            selector: 'github-issues',
             directives: [angular2_1.NgFor, issue_component_1.IssueComponent, mentions_component_1.MentionComponent, angular2_1.NgIf],
             templateUrl: 'github_issues.html'
         }), 

@@ -1,0 +1,26 @@
+{
+  "name": "github_issues",
+  "version": "0.0.1",
+  "description": "",
+  "dependencies": {
+    "angular2": "^2.0.0-alpha.44",
+    "typescript": "^1.6.2",
+    "systemjs": "*",
+    "es6-promise": "*"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "postinstall": "mkdir -p built && cp node_modules/systemjs/dist/system.js built && cp node_modules/angular2/bundles/angular2.dev.js built"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mhevery/github_issues.git"
+  },
+  "author": "Misko Hevery <misko@hevery.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mhevery/github_issues/issues"
+  },
+  "homepage": "https://github.com/mhevery/github_issues#readme"
+}

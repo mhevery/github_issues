@@ -4,9 +4,8 @@
     <title>GitHub Issues</title>
     <link rel="icon" href="favicon.ico" type="image/x-icon">
     <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
-    <script src="https://github.jspm.io/jmcriffey/bower-traceur-runtime@0.0.87/traceur-runtime.js"></script>
-    <script src="https://jspm.io/system@0.16.js"></script>
-    <script src="https://code.angularjs.org/2.0.0-alpha.32/angular2.dev.js"></script>
+    <script src="built/system.js"></script>
+    <script src="built/angular2.dev.js"></script>    
     <script src="https://cdn.firebase.com/js/client/2.2.7/firebase.js"></script>
   </head>
   <body>
@@ -14,8 +13,10 @@
   </body>
   <script>
     System.config({
-      baseURL: 'build'
+      packages: {
+        'built': {defaultExtension: 'js'},
+      }
     });
-    System.import('app');
+    System.import('built/app');
   </script>
 </html>

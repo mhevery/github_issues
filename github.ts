@@ -49,7 +49,8 @@ export class Repository {
   }
   
   loadBranches(notify:(name: string, job: string, status: string) => void) {
-    urlGET(GIT_API + 'branches', gitToken(), (code: number, data: List<Branch>) => {
+    urlGET(GIT_API + 'branches?per_page=100', gitToken(), (code: number, data: Array<Branch>) => {
+      if (code !== 200) return;
       data.forEach((branch: Branch) => {
         if (branch.name.indexOf('presubmit-') == 0) {
           urlGET(TRAVIS_API + 'branches/' + branch.name, null, (code: number, travis: TravisBranch) => {

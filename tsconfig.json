@@ -1,21 +1,26 @@
 {
     "compilerOptions": {
         "module": "commonjs",
+        "noImplicitAny": false,
+        "outDir": "built",
+        "rootDir": ".",
+        "sourceMap": true,
         "noImplicitAny": true,
         "removeComments": false,
         "preserveConstEnums": true,
-        "outDir": "build",
-        "sourceMap": true,
         "sourceRoot": ".",
         "target": "ES5",
         "emitDecoratorMetadata": true,
         "experimentalDecorators": true
     },
+    "exclude": [
+        "node_modules"
+    ],
     "files": [
-      "typings/firebase/firebase.d.ts",
-      "typings/angular2/angular2.d.ts",
-      "typings/github.d.ts",
-      "typings/travis.d.ts",
+      "./typings/github.d.ts",
+      "./typings/travis.d.ts",
+      "./typings/firebase/firebase.d.ts", 
       "app.ts"
     ]
+        
 }

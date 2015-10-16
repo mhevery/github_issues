@@ -19,7 +19,7 @@
   Logged in as {{getUsername()}}
 </div>
 <div *ng-if="!hasAuthToken()">
-  <a href (click)="setupAuthToken(); false">Log in with Github</a>
+  <a href (click)="setupAuthToken(); $event.preventDefault()">Log in with Github</a>
 </div>
 
 <div [hidden]="presubmit.items.length == 0">

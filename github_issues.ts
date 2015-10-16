@@ -1,10 +1,9 @@
-/// <reference path="typings/github.d.ts" />
 import {Component, View, NgFor, NgIf} from 'angular2/angular2';
-import {Repository} from 'github';
-import {OrderedSet} from 'set';
-import {IssueComponent} from 'issue_component';
-import {MentionComponent} from 'mentions_component';
-import {coreTeam} from 'core_team';
+import {Repository} from './github';
+import {OrderedSet} from './set';
+import {IssueComponent} from './issue_component';
+import {MentionComponent} from './mentions_component';
+import {coreTeam} from './core_team';
 
 var ref = new Firebase("https://ng2-projects.firebaseio.com");
 
@@ -60,9 +59,7 @@ class Presubmit {
 }
 
 @Component({
-	selector: 'github-issues'
-})
-@View({
+	selector: 'github-issues',
   directives: [NgFor, IssueComponent, MentionComponent, NgIf],
   templateUrl: 'github_issues.html' 
 })

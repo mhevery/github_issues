@@ -10,11 +10,8 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 var angular2_1 = require('angular2/angular2');
-// https://github.com/Microsoft/TypeScript/issues/4092
-//import {Mentions} from './github';
-//import {CoreTeam} from 'core_team';
-var m = require('./github');
-var c = require('core_team');
+var github_1 = require('./github');
+var core_team_1 = require('./core_team');
 var MentionComponent = (function () {
     function MentionComponent(mentions, coreTeam) {
         this.username = '';
@@ -38,13 +35,13 @@ var MentionComponent = (function () {
         angular2_1.Component({
             selector: 'gh-mentions',
             properties: ['org', 'days'],
-            appInjector: [m.Mentions, c.CoreTeam]
+            providers: [github_1.Mentions, core_team_1.CoreTeam]
         }),
         angular2_1.View({
             template: "\n  <div>\n    <input (keyup)=\"username = $event.target.value\" [value]=\"username\" placeholder=\"username\">\n    <button (click)=\"refresh()\" [disabled]=\"username.trim().length == 0\">Refresh</button>\n    <ul>\n      <li *ng-for=\"#mention of mentions.list\">\n        <a href=\"{{mention.url}}\" target=\"_blank\">#{{mention.number}}: {{mention.title}}</a> ({{mention.state}})\n      </li>\n    </ul>\n    <p *ng-if=\"!fetched\">Refresh to see mentions</p>\n  </div>\n  ",
             directives: [angular2_1.NgFor, angular2_1.NgIf]
         }), 
-        __metadata('design:paramtypes', [m.Mentions, c.CoreTeam])
+        __metadata('design:paramtypes', [github_1.Mentions, core_team_1.CoreTeam])
     ], MentionComponent);
     return MentionComponent;
 })();
