@@ -1,14 +1,14 @@
 <style>
-  li.passed {
+  .presubmit.passed {
     background-color: #CCFFCC;
   }
-  li.canceled {
+  .presubmit.canceled {
     background-color: #CCCCCC;
   }
-  li.failed {
+  .presubmit.failed {
     background-color: #FFCCCC;
   }
-  li.errored {
+  .presubmit.errored {
     background-color: #FF8888;
   }
 </style>
@@ -24,12 +24,23 @@
 
 <div [hidden]="presubmit.items.length == 0">
 <h1>Presubmit Queue</h1>
-<ul>
-  <li *ng-for="var item of presubmit.items" [class-name]="item?.travisStatus">
-    <a href="https://github.com/angular/angular/tree/{{item.branchName}}" target="_blank">{{item.branchName}}</a>
-    ( <a href="https://travis-ci.org/angular/angular/builds/{{item?.travisJob}}" target="_blank">{{item?.travisStatus}}</a> ) 
-  </li>
-</ul>
+<table>
+  <tr><th>Branch</th><th>Travis</th><th>PR</th></tr>
+  <tr *ng-for="var item of presubmit.items">
+    <td [class-name]="'presubmit ' + item?.travisStatus">
+      <a href="https://github.com/angular/angular/tree/{{item.branchName}}" target="_blank">{{item.branchName}}</a>
+    </td>
+    <td [class-name]="'presubmit ' + item?.travisStatus">
+      <a href="https://travis-ci.org/angular/angular/builds/{{item?.travisJob}}" target="_blank">{{item?.travisStatus}}</a>
+    </td>
+    <td>
+      <issue *ng-if="item.number && getIssue(item.number)" [issue]="getIssue(item.number)"></issue>
+      <a *ng-if="!(item.number && getIssue(item.number))" 
+         href="https://github.com/angular/angular/pull/{{item.number}}" 
+         target="_blank">#{{item.number}}</a>
+    </td>
+  </tr>
+</table>
 </div>
 
 <h1>Milestone</h1>

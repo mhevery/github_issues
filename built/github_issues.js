@@ -61,15 +61,17 @@ var prAuthorMilestone = {
     title: 'PRs by Author'
 };
 var Presubmit = (function () {
-    function Presubmit(branchName, travisJob, travisStatus) {
+    function Presubmit(branchName, travisJob, travisStatus, number) {
         this.branchName = branchName;
         this.travisJob = travisJob;
         this.travisStatus = travisStatus;
+        this.number = number;
     }
     return Presubmit;
 })();
 var GithubIssues = (function () {
     function GithubIssues() {
+        this.issues = {};
         this.presubmit = new set_1.OrderedSet(function (a, b) {
             return _strCmp(a.branchName, b.branchName);
         });
@@ -92,10 +94,18 @@ var GithubIssues = (function () {
         this.loadIssues();
         this.loadPresubmit();
     }
+    GithubIssues.prototype.getIssue = function (id) {
+        return this.issues[id];
+    };
     GithubIssues.prototype.loadPresubmit = function () {
         var _this = this;
         this.repo.loadBranches(function (branchName, travisJob, travisStatus) {
-            _this.presubmit.setIfAbsent(new Presubmit(branchName, travisJob, travisStatus));
+            var prNo = null;
+            var parts = branchName.split('-pr-');
+            if (parts && parts[1]) {
+                prNo = parts[1];
+            }
+            _this.presubmit.setIfAbsent(new Presubmit(branchName, travisJob, travisStatus, prNo));
         });
     };
     GithubIssues.prototype.loadIssues = function () {
@@ -121,6 +131,7 @@ var GithubIssues = (function () {
         }
     };
     GithubIssues.prototype.onNewPr = function (pr) {
+        this.issues[pr.number] = pr;
         // By Assignee
         if (pr.assignee)
             this.milestoneUsers.set(pr.assignee);

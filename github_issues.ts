@@ -55,7 +55,8 @@ class Presubmit {
   constructor(
     public branchName: string, 
     public travisJob: string, 
-    public travisStatus: string) { }
+    public travisStatus: string,
+    public number: string) { }
 }
 
 @Component({
@@ -64,6 +65,7 @@ class Presubmit {
   templateUrl: 'github_issues.html' 
 })
 export class GithubIssues {
+  issues: {[index:string]: Issue} = {};
   presubmit = new OrderedSet<Presubmit>((a:Presubmit, b:Presubmit) => {
     return _strCmp(a.branchName, b.branchName);
   });
@@ -89,9 +91,18 @@ export class GithubIssues {
     this.loadPresubmit();
   }
   
+  getIssue(id: string):Issue {
+    return this.issues[id];
+  }
+  
   loadPresubmit() {
     this.repo.loadBranches((branchName, travisJob, travisStatus) => {
-      this.presubmit.setIfAbsent(new Presubmit(branchName, travisJob, travisStatus));
+      var prNo: string = null;
+      var parts = branchName.split('-pr-');
+      if (parts && parts[1]) {
+        prNo = parts[1];
+      }
+      this.presubmit.setIfAbsent(new Presubmit(branchName, travisJob, travisStatus, prNo));
     });
   }
 
@@ -117,6 +128,7 @@ export class GithubIssues {
   }
 
   onNewPr(pr: Issue) {
+    this.issues[pr.number] = pr;
     // By Assignee
     if (pr.assignee) this.milestoneUsers.set(pr.assignee);
     this.milestones.setIfAbsent(new MilestoneGroup(prAssigneeMilestone)).addByAsignee(pr);
